@@ -1,12 +1,10 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
+	"github.com/AlsoShantanuBorkar/budget_max/services"
 	"github.com/AlsoShantanuBorkar/budget_max/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -16,7 +14,6 @@ func CreateBudget(c *gin.Context) {
 	var req models.CreateBudgetRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Request",
 		})
@@ -24,7 +21,6 @@ func CreateBudget(c *gin.Context) {
 	}
 
 	if err := utils.GetValidator().Struct(req); err != nil {
-		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Request",
 		})
@@ -36,29 +32,16 @@ func CreateBudget(c *gin.Context) {
 		return
 	}
 
-	b := models.Budget{
-		ID:        uuid.New(),
-		UserID:    userId,
-		Type:      req.Type,
-		Name:      req.Name,
-		StartDate: req.StartDate,
-		EndDate:   req.EndDate,
-		Amount:    req.Amount,
-		CreatedAt: time.Now(),
-	}
-
-	err := database.CreateBudget(&b)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to create budget",
-		})
+	budget, serviceErr := services.CreateBudget(c, &req, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Budget created successfully",
 		"data": gin.H{
-			"budget": b,
+			"budget": budget,
 		},
 	})
 }
@@ -94,45 +77,9 @@ func UpdateBudget(c *gin.Context) {
 		return
 	}
 
-	// Fetch existing budget
-	_, err = database.GetBudgetByID(budgetId, userId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "budget not found",
-		})
-		return
-	}
-
-	// Update only fields that are set
-	updates := make(map[string]any)
-	if req.Name != nil {
-		updates["name"] = *req.Name
-	}
-	if req.StartDate != nil {
-		updates["start_date"] = *req.StartDate
-	}
-	if req.EndDate != nil {
-		updates["end_date"] = *req.EndDate
-	}
-	if req.Amount != nil {
-		updates["amount"] = *req.Amount
-	}
-
-	// Save updated budget
-	err = database.UpdateBudget(budgetId, updates)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to update budget",
-		})
-		return
-	}
-
-	// Fetch updated budget
-	updatedBudget, err := database.GetBudgetByID(budgetId, userId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to fetch updated budget",
-		})
+	updatedBudget, serviceErr := services.UpdateBudget(c, &req, budgetId, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
@@ -157,19 +104,9 @@ func DeleteBudget(c *gin.Context) {
 		return
 	}
 
-	_, err = database.GetBudgetByID(budgetId, userId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "budget not found",
-		})
-		return
-	}
-
-	err = database.DeleteBudget(budgetId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error occurred while deleting budget",
-		})
+	serviceErr := services.DeleteBudget(c, budgetId, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
@@ -184,11 +121,9 @@ func GetBudgetsByUserID(c *gin.Context) {
 		return
 	}
 
-	budgets, err := database.GetBudgetsByUser(userId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error occurred while fetching budgets",
-		})
+	budgets, serviceErr := services.GetBudgetsByUserID(c, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
@@ -213,16 +148,14 @@ func GetBudgetByID(c *gin.Context) {
 		return
 	}
 
-	b, err := database.GetBudgetByID(budgetID, userId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "budget not found",
-		})
+	budget, serviceErr := services.GetBudgetByID(c, budgetID, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Budget fetched successfully",
-		"data":    b,
+		"data":    budget,
 	})
 }

@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
+	"github.com/AlsoShantanuBorkar/budget_max/services"
 	"github.com/AlsoShantanuBorkar/budget_max/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,20 +28,9 @@ func CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category := models.Category{
-		ID:        uuid.New(),
-		UserID:    userId,
-		Name:      req.Name,
-		Type:      req.Type,
-		Icon:      req.Icon,
-		IsDefault: req.IsDefault,
-	}
-
-	err := database.CreateCategory(&category)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to create category",
-		})
+	category, serviceErr := services.CreateCategory(c, &req, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
@@ -51,7 +40,6 @@ func CreateCategory(c *gin.Context) {
 			"category": category,
 		},
 	})
-
 }
 
 func GetAllCategories(c *gin.Context) {
@@ -60,22 +48,19 @@ func GetAllCategories(c *gin.Context) {
 		return
 	}
 
-	categories, err := database.GetUserCategories(userId)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error Occurred while fetching categories",
-		})
+	categories, serviceErr := services.GetCategoriesByUserID(c, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
+		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Categories fetched successfully",
 		"data":    categories,
 	})
-
 }
 
 func GetCategoryByID(c *gin.Context) {
-
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -90,11 +75,9 @@ func GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	category, err := database.GetCategoryByID(categoryID, userId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error Fetching Category Data",
-		})
+	category, serviceErr := services.GetCategoryByID(c, categoryID, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
@@ -102,7 +85,6 @@ func GetCategoryByID(c *gin.Context) {
 		"message": "Category fetched successfully",
 		"data":    category,
 	})
-
 }
 
 func UpdateCategory(c *gin.Context) {
@@ -120,6 +102,11 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
+	if err := utils.GetValidator().Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Request"})
+		return
+	}
+
 	categoryIdStr := c.Param("id")
 	categoryId, err := uuid.Parse(categoryIdStr)
 	if err != nil {
@@ -129,46 +116,15 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	// Fetch existing category
-	category, err := database.GetCategoryByID(categoryId, userId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "category not found",
-		})
-		return
-	}
-
-	// Update only fields that are set
-	if req.Name != nil {
-		category.Name = *req.Name
-	}
-	if req.Type != nil {
-		category.Type = *req.Type
-	}
-	if req.Icon != nil {
-		category.Icon = req.Icon
-	}
-	if req.IsDefault != nil {
-		category.IsDefault = *req.IsDefault
-	}
-
-	// Save updated category
-	err = database.UpdateCategory(categoryId, map[string]interface{}{
-		"name":       category.Name,
-		"type":       category.Type,
-		"icon":       category.Icon,
-		"is_default": category.IsDefault,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to update category",
-		})
+	updatedCategory, serviceErr := services.UpdateCategory(c, &req, categoryId, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Category updated successfully",
-		"data":    category,
+		"data":    updatedCategory,
 	})
 }
 
@@ -187,19 +143,9 @@ func DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	_, err = database.GetCategoryByID(categoryId, userId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "category not found",
-		})
-		return
-	}
-
-	err = database.DeleteCategory(categoryId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error Occurred",
-		})
+	serviceErr := services.DeleteCategory(c, categoryId, userId)
+	if serviceErr != nil {
+		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
 	}
 
