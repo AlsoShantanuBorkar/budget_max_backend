@@ -9,8 +9,8 @@ func CreateTransation(txn *models.Transaction) error {
 	return DB.Create(txn).Error
 }
 
-func GetTransactionsByUser(userID uuid.UUID) ([]models.Transaction, error) {
-	var txns []models.Transaction
+func GetTransactionsByUser(userID uuid.UUID) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
 	err := DB.Where("user_id = ?", userID).Find(&txns).Error
 	return txns, err
 }

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -35,7 +36,24 @@ func validateDateTime(fl validator.FieldLevel) bool {
 
 // validateUUID4 checks if the UUID is version 4
 func validateUUID4(fl validator.FieldLevel) bool {
-	str := fl.Field().String()
-	_, err := uuid.Parse(str)
-	return err == nil
+	// Handle pointer types
+	if fl.Field().Kind() == reflect.Ptr {
+		if fl.Field().IsNil() {
+			return true // nil pointers are valid for omitempty
+		}
+		// Get the value the pointer points to
+		field := fl.Field().Elem()
+		if field.Kind() == reflect.String {
+			_, err := uuid.Parse(field.String())
+			return err == nil
+		}
+	}
+
+	// Handle direct string values
+	if fl.Field().Kind() == reflect.String {
+		_, err := uuid.Parse(fl.Field().String())
+		return err == nil
+	}
+
+	return false
 }

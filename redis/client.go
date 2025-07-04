@@ -8,7 +8,7 @@ import (
 )
 
 var Client *redis.Client
-var ctx = context.Background()
+var Ctx = context.Background()
 
 func InitRedis() {
 
@@ -18,7 +18,7 @@ func InitRedis() {
 		DB:       0,
 	})
 
-	_, err := Client.Ping(ctx).Result()
+	_, err := Client.Ping(Ctx).Result()
 
 	if err != nil {
 		panic(err)
