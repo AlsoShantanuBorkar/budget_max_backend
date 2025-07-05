@@ -16,4 +16,10 @@ func RegisterTransactionRoutes(rg *gin.RouterGroup) {
 	transaction.POST("/", controllers.CreateTransation)
 	transaction.DELETE("/:id", controllers.DeleteTransaction)
 	transaction.PUT("/:id", controllers.UpdateTransaction)
+	transaction.GET("/budget/:budget_id", controllers.GetTransactionsByBudget)
+	transaction.GET("/category/:category_id", controllers.GetTransactionsByCategory)
+	transaction.GET("/date-range", controllers.GetTransactionsByDateRange)
+	transaction.GET("/type/:type", controllers.GetTransactionsByType)
+	transaction.GET("/amount-range", controllers.GetTransactionsByAmountRange)
+	transaction.GET("/filters", controllers.GetTransactionsWithFilters)
 }

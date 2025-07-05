@@ -1,6 +1,8 @@
 package database
 
 import (
+	"time"
+
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
 )
@@ -30,4 +32,76 @@ func GetTransactionByID(txnId uuid.UUID, userId uuid.UUID) (*models.Transaction,
 		return nil, err
 	}
 	return &txn, err
+}
+
+// GetTransactionsByBudget returns all transactions for a specific budget
+func GetTransactionsByBudget(userID uuid.UUID, budgetID uuid.UUID) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
+	err := DB.Where("user_id = ? AND budget_id = ?", userID, budgetID).Find(&txns).Error
+	return txns, err
+}
+
+// GetTransactionsByCategory returns all transactions for a specific category
+func GetTransactionsByCategory(userID uuid.UUID, categoryID uuid.UUID) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
+	err := DB.Where("user_id = ? AND category_id = ?", userID, categoryID).Find(&txns).Error
+	return txns, err
+}
+
+// GetTransactionsByDateRange returns all transactions within a date range
+func GetTransactionsByDateRange(userID uuid.UUID, startDate, endDate time.Time) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
+	err := DB.Where("user_id = ? AND date >= ? AND date <= ?", userID, startDate, endDate).Find(&txns).Error
+	return txns, err
+}
+
+// GetTransactionsByType returns all transactions of a specific type (expense/income)
+func GetTransactionsByType(userID uuid.UUID, transactionType string) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
+	err := DB.Where("user_id = ? AND type = ?", userID, transactionType).Find(&txns).Error
+	return txns, err
+}
+
+// GetTransactionsByAmountRange returns all transactions within an amount range
+func GetTransactionsByAmountRange(userID uuid.UUID, minAmount, maxAmount float64) ([]*models.Transaction, error) {
+	var txns []*models.Transaction
+	err := DB.Where("user_id = ? AND amount >= ? AND amount <= ?", userID, minAmount, maxAmount).Find(&txns).Error
+	return txns, err
+}
+
+// GetTransactionsWithFilters returns transactions with multiple optional filters
+func GetTransactionsWithFilters(userID uuid.UUID, filters map[string]interface{}) ([]*models.Transaction, error) {
+	query := DB.Where("user_id = ?", userID)
+
+	if budgetID, ok := filters["budget_id"].(uuid.UUID); ok {
+		query = query.Where("budget_id = ?", budgetID)
+	}
+
+	if categoryID, ok := filters["category_id"].(uuid.UUID); ok {
+		query = query.Where("category_id = ?", categoryID)
+	}
+
+	if transactionType, ok := filters["type"].(string); ok {
+		query = query.Where("type = ?", transactionType)
+	}
+
+	if startDate, ok := filters["start_date"].(time.Time); ok {
+		query = query.Where("date >= ?", startDate)
+	}
+
+	if endDate, ok := filters["end_date"].(time.Time); ok {
+		query = query.Where("date <= ?", endDate)
+	}
+
+	if minAmount, ok := filters["min_amount"].(float64); ok {
+		query = query.Where("amount >= ?", minAmount)
+	}
+
+	if maxAmount, ok := filters["max_amount"].(float64); ok {
+		query = query.Where("amount <= ?", maxAmount)
+	}
+
+	var txns []*models.Transaction
+	err := query.Find(&txns).Error
+	return txns, err
 }
