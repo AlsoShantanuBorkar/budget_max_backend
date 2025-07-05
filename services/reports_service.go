@@ -18,7 +18,6 @@ func GetBudgetSummary(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) (*re
 	}
 	txns, err := database.GetTransactionsByBudget(userId, budgetID)
 	if err != nil {
-
 		return nil, NewServiceError(http.StatusInternalServerError, "Error finding Transactions")
 	}
 	totalExpenses := 0.0
@@ -41,10 +40,10 @@ func GetBudgetSummary(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) (*re
 	}, nil
 }
 
-func GetWeeklySummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.WeeklySummary, error) {
+func GetWeeklySummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.WeeklySummary, *ServiceError) {
 	txns, err := database.GetTransactionsByDateRange(userId, startDate, endDate)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 	totalExpenses := 0.0
 	totalIncome := 0.0
@@ -65,13 +64,13 @@ func GetWeeklySummary(c *gin.Context, userId uuid.UUID, startDate time.Time, end
 	}, nil
 }
 
-func GetMonthlySummary(c *gin.Context, userId uuid.UUID, month time.Time) (*reports.MonthlySummary, error) {
+func GetMonthlySummary(c *gin.Context, userId uuid.UUID, month time.Time) (*reports.MonthlySummary, *ServiceError) {
 	startOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Second)
 
 	txns, err := database.GetTransactionsByDateRange(userId, startOfMonth, endOfMonth)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 	totalExpenses := 0.0
 	totalIncome := 0.0
@@ -91,13 +90,13 @@ func GetMonthlySummary(c *gin.Context, userId uuid.UUID, month time.Time) (*repo
 	}, nil
 }
 
-func GetYearlySummary(c *gin.Context, userId uuid.UUID, year time.Time) (*reports.YearlySummary, error) {
+func GetYearlySummary(c *gin.Context, userId uuid.UUID, year time.Time) (*reports.YearlySummary, *ServiceError) {
 	startOfYear := time.Date(year.Year(), 1, 1, 0, 0, 0, 0, year.Location())
 	endOfYear := time.Date(year.Year(), 12, 31, 23, 59, 59, 999999999, year.Location())
 
 	txns, err := database.GetTransactionsByDateRange(userId, startOfYear, endOfYear)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 	totalExpenses := 0.0
 	totalIncome := 0.0
@@ -117,18 +116,18 @@ func GetYearlySummary(c *gin.Context, userId uuid.UUID, year time.Time) (*report
 	}, nil
 }
 
-func GetCategorySummary(c *gin.Context, userId uuid.UUID, categoryID uuid.UUID) (*reports.CategorySummary, error) {
+func GetCategorySummary(c *gin.Context, userId uuid.UUID, categoryID uuid.UUID) (*reports.CategorySummary, *ServiceError) {
 	category, err := database.GetCategoryByID(categoryID, userId)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching category")
 	}
 	if category == nil {
-		return nil, &ServiceError{Message: "Category not found", Code: http.StatusNotFound}
+		return nil, NewServiceError(http.StatusNotFound, "Category not found")
 	}
 
 	txns, err := database.GetTransactionsByCategory(userId, categoryID)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 	totalExpenses := 0.0
 	totalIncome := 0.0
@@ -149,10 +148,10 @@ func GetCategorySummary(c *gin.Context, userId uuid.UUID, categoryID uuid.UUID) 
 	}, nil
 }
 
-func GetCustomDateRangeSummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.CustomDateRangeSummary, error) {
+func GetCustomDateRangeSummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.CustomDateRangeSummary, *ServiceError) {
 	txns, err := database.GetTransactionsByDateRange(userId, startDate, endDate)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 	totalExpenses := 0.0
 	totalIncome := 0.0
@@ -173,10 +172,10 @@ func GetCustomDateRangeSummary(c *gin.Context, userId uuid.UUID, startDate time.
 	}, nil
 }
 
-func GetDailyAverageSummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.DailyAverageSummary, error) {
+func GetDailyAverageSummary(c *gin.Context, userId uuid.UUID, startDate time.Time, endDate time.Time) (*reports.DailyAverageSummary, *ServiceError) {
 	txns, err := database.GetTransactionsByDateRange(userId, startDate, endDate)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 
 	totalExpenses := 0.0
@@ -203,7 +202,7 @@ func GetDailyAverageSummary(c *gin.Context, userId uuid.UUID, startDate time.Tim
 	}, nil
 }
 
-func GetTopCategories(c *gin.Context, userId uuid.UUID, limit int, transactionType string) ([]*reports.TopCategory, error) {
+func GetTopCategories(c *gin.Context, userId uuid.UUID, limit int, transactionType string) ([]*reports.TopCategory, *ServiceError) {
 	if limit <= 0 {
 		limit = 5
 	}
@@ -211,7 +210,7 @@ func GetTopCategories(c *gin.Context, userId uuid.UUID, limit int, transactionTy
 	// Get all transactions for the user
 	txns, err := database.GetTransactionsByType(userId, transactionType)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching transactions")
 	}
 
 	// Group transactions by category
@@ -219,7 +218,6 @@ func GetTopCategories(c *gin.Context, userId uuid.UUID, limit int, transactionTy
 	categoryNames := make(map[string]string)
 
 	for _, txn := range txns {
-
 		categoryTotals[txn.CategoryID.String()] += txn.Amount
 		// We'll get category names in the next step
 	}
@@ -277,10 +275,10 @@ func GetTopCategories(c *gin.Context, userId uuid.UUID, limit int, transactionTy
 	return categories, nil
 }
 
-func GetAllCategoriesSummary(c *gin.Context, userId uuid.UUID) ([]*reports.CategorySummary, error) {
+func GetAllCategoriesSummary(c *gin.Context, userId uuid.UUID) ([]*reports.CategorySummary, *ServiceError) {
 	categories, err := database.GetUserCategories(userId)
 	if err != nil {
-		return nil, err
+		return nil, NewServiceError(http.StatusInternalServerError, "Error fetching categories")
 	}
 
 	var summaries []*reports.CategorySummary
