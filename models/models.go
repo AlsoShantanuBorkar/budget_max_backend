@@ -25,14 +25,15 @@ type (
 	UpdateCategoryRequest = categories.UpdateCategoryRequest
 
 	// Transaction models
-	Transaction              = transactions.Transaction
-	CreateTransactionRequest = transactions.CreateTransactionRequest
-	UpdateTransactionRequest = transactions.UpdateTransactionRequest
+	Transaction               = transactions.Transaction
+	CreateTransactionRequest  = transactions.CreateTransactionRequest
+	UpdateTransactionRequest  = transactions.UpdateTransactionRequest
+	TransactionFiltersRequest = transactions.TransactionFiltersRequest
+	DateRangeRequest          = transactions.DateRangeRequest
+	AmountRangeRequest        = transactions.AmountRangeRequest
 
 	// Budget models
 	Budget              = budget.Budget
 	CreateBudgetRequest = budget.CreateBudgetRequest
 	UpdateBudgetRequest = budget.UpdateBudgetRequest
 )
-
-//  		"refresh": "df9fbc98-3acf-4469-9c76-f59b4f292b9f",

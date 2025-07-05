@@ -24,5 +24,6 @@ func main() {
 	routes.RegisterTransactionRoutes(api)
 	routes.RegisterCategoryRoutes(api)
 	routes.RegisterBudgetRoutes(api)
+	routes.RegisterReportsRoutes(api)
 	r.Run(":8080")
 }
