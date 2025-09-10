@@ -10,7 +10,25 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateCategory(c *gin.Context) {
+type CategoryControllerInterface interface {
+	CreateCategory(c *gin.Context)
+	GetAllCategories(c *gin.Context)
+	GetCategoryByID(c *gin.Context)
+	UpdateCategory(c *gin.Context)
+	DeleteCategory(c *gin.Context)
+}
+
+type CategoryController struct {
+	service services.CategoryServiceInterface
+}
+
+func NewCategoryController(service services.CategoryServiceInterface) *CategoryController {
+	return &CategoryController{
+		service: service,
+	}
+}
+
+func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 	var req models.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -28,7 +46,7 @@ func CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category, serviceErr := services.CreateCategory(c, &req, userId)
+	category, serviceErr := ctrl.service.CreateCategory(c, &req, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -42,13 +60,13 @@ func CreateCategory(c *gin.Context) {
 	})
 }
 
-func GetAllCategories(c *gin.Context) {
+func (ctrl *CategoryController) GetAllCategories(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
 	}
 
-	categories, serviceErr := services.GetCategoriesByUserID(c, userId)
+	categories, serviceErr := ctrl.service.GetCategoriesByUserID(c, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -60,7 +78,7 @@ func GetAllCategories(c *gin.Context) {
 	})
 }
 
-func GetCategoryByID(c *gin.Context) {
+func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -75,7 +93,7 @@ func GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	category, serviceErr := services.GetCategoryByID(c, categoryID, userId)
+	category, serviceErr := ctrl.service.GetCategoryByID(c, categoryID, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -87,7 +105,7 @@ func GetCategoryByID(c *gin.Context) {
 	})
 }
 
-func UpdateCategory(c *gin.Context) {
+func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -116,7 +134,7 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	updatedCategory, serviceErr := services.UpdateCategory(c, &req, categoryId, userId)
+	updatedCategory, serviceErr := ctrl.service.UpdateCategory(c, &req, categoryId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -128,7 +146,7 @@ func UpdateCategory(c *gin.Context) {
 	})
 }
 
-func DeleteCategory(c *gin.Context) {
+func (ctrl *CategoryController) DeleteCategory(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -143,7 +161,7 @@ func DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	serviceErr := services.DeleteCategory(c, categoryId, userId)
+	serviceErr := ctrl.service.DeleteCategory(c, categoryId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return

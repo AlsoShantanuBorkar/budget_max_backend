@@ -10,7 +10,25 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateBudget(c *gin.Context) {
+type BudgetControllerInterface interface {
+	CreateBudget(c *gin.Context)
+	UpdateBudget(c *gin.Context)
+	DeleteBudget(c *gin.Context)
+	GetBudgetsByUserID(c *gin.Context)
+	GetBudgetByID(c *gin.Context)
+}
+
+type BudgetController struct {
+	service services.BudgetServiceInterface
+}
+
+func NewBudgetController(service services.BudgetServiceInterface) *BudgetController {
+	return &BudgetController{
+		service: service,
+	}
+}
+
+func (ctrl *BudgetController) CreateBudget(c *gin.Context) {
 	var req models.CreateBudgetRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -32,7 +50,7 @@ func CreateBudget(c *gin.Context) {
 		return
 	}
 
-	budget, serviceErr := services.CreateBudget(c, &req, userId)
+	budget, serviceErr := ctrl.service.CreateBudget(c, &req, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -46,7 +64,7 @@ func CreateBudget(c *gin.Context) {
 	})
 }
 
-func UpdateBudget(c *gin.Context) {
+func (ctrl *BudgetController) UpdateBudget(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -77,7 +95,7 @@ func UpdateBudget(c *gin.Context) {
 		return
 	}
 
-	updatedBudget, serviceErr := services.UpdateBudget(c, &req, budgetId, userId)
+	updatedBudget, serviceErr := ctrl.service.UpdateBudget(c, &req, budgetId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -89,7 +107,7 @@ func UpdateBudget(c *gin.Context) {
 	})
 }
 
-func DeleteBudget(c *gin.Context) {
+func (ctrl *BudgetController) DeleteBudget(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -104,7 +122,7 @@ func DeleteBudget(c *gin.Context) {
 		return
 	}
 
-	serviceErr := services.DeleteBudget(c, budgetId, userId)
+	serviceErr := ctrl.service.DeleteBudget(c, budgetId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -115,13 +133,13 @@ func DeleteBudget(c *gin.Context) {
 	})
 }
 
-func GetBudgetsByUserID(c *gin.Context) {
+func (ctrl *BudgetController) GetBudgetsByUserID(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
 	}
 
-	budgets, serviceErr := services.GetBudgetsByUserID(c, userId)
+	budgets, serviceErr := ctrl.service.GetBudgetsByUserID(c, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -133,7 +151,7 @@ func GetBudgetsByUserID(c *gin.Context) {
 	})
 }
 
-func GetBudgetByID(c *gin.Context) {
+func (ctrl *BudgetController) GetBudgetByID(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -148,7 +166,7 @@ func GetBudgetByID(c *gin.Context) {
 		return
 	}
 
-	budget, serviceErr := services.GetBudgetByID(c, budgetID, userId)
+	budget, serviceErr := ctrl.service.GetBudgetByID(c, budgetID, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return

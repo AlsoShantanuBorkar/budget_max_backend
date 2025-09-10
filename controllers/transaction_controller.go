@@ -11,7 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateTransaction(c *gin.Context) {
+type TransactionControllerInterface interface {
+	CreateTransaction(c *gin.Context)
+	UpdateTransaction(c *gin.Context)
+	DeleteTransaction(c *gin.Context)
+	GetTransactionsByUserID(c *gin.Context)
+	GetTransactionByID(c *gin.Context)
+	GetTransactionsByBudget(c *gin.Context)
+	GetTransactionsByCategory(c *gin.Context)
+	GetTransactionsByDateRange(c *gin.Context)
+	GetTransactionsByType(c *gin.Context)
+	GetTransactionsByAmountRange(c *gin.Context)
+	GetTransactionsWithFilters(c *gin.Context)
+}
+type TransactionController struct {
+	service services.TransactionServiceInterface
+}
+
+func NewTransactionController(service services.TransactionServiceInterface) *TransactionController {
+	return &TransactionController{
+		service: service,
+	}
+}
+
+func (ctrl *TransactionController) CreateTransaction(c *gin.Context) {
 	var req models.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid Request"})
@@ -27,7 +50,7 @@ func CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	txn, err := services.CreateTransaction(c, &req, userId)
+	txn, err := ctrl.service.CreateTransaction(c, &req, userId)
 	if err != nil {
 		c.JSON(err.Code, gin.H{"message": err.Message})
 		return
@@ -39,7 +62,7 @@ func CreateTransaction(c *gin.Context) {
 	})
 }
 
-func UpdateTransaction(c *gin.Context) {
+func (ctrl *TransactionController) UpdateTransaction(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -67,7 +90,7 @@ func UpdateTransaction(c *gin.Context) {
 		return
 	}
 
-	updatedTransaction, serviceErr := services.UpdateTransaction(c, &req, txnId, userId)
+	updatedTransaction, serviceErr := ctrl.service.UpdateTransaction(c, &req, txnId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -79,7 +102,7 @@ func UpdateTransaction(c *gin.Context) {
 	})
 }
 
-func DeleteTransaction(c *gin.Context) {
+func (ctrl *TransactionController) DeleteTransaction(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -94,7 +117,7 @@ func DeleteTransaction(c *gin.Context) {
 		return
 	}
 
-	serviceErr := services.DeleteTransaction(c, txnId, userId)
+	serviceErr := ctrl.service.DeleteTransaction(c, txnId, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -105,13 +128,13 @@ func DeleteTransaction(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByUserID(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByUserID(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByUserID(c, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByUserID(c, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -123,7 +146,7 @@ func GetTransactionsByUserID(c *gin.Context) {
 	})
 }
 
-func GetTransactionByID(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionByID(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -138,7 +161,7 @@ func GetTransactionByID(c *gin.Context) {
 		return
 	}
 
-	txn, serviceErr := services.GetTransactionByID(c, txnID, userId)
+	txn, serviceErr := ctrl.service.GetTransactionByID(c, txnID, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -150,7 +173,7 @@ func GetTransactionByID(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByBudget(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByBudget(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -165,7 +188,7 @@ func GetTransactionsByBudget(c *gin.Context) {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByBudget(c, budgetID, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByBudget(c, budgetID, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -177,7 +200,7 @@ func GetTransactionsByBudget(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByCategory(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByCategory(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -192,7 +215,7 @@ func GetTransactionsByCategory(c *gin.Context) {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByCategory(c, categoryID, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByCategory(c, categoryID, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -204,7 +227,7 @@ func GetTransactionsByCategory(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByDateRange(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByDateRange(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -232,7 +255,7 @@ func GetTransactionsByDateRange(c *gin.Context) {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByDateRange(c, startDate, endDate, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByDateRange(c, startDate, endDate, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -244,7 +267,7 @@ func GetTransactionsByDateRange(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByType(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByType(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -258,7 +281,7 @@ func GetTransactionsByType(c *gin.Context) {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByType(c, transactionType, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByType(c, transactionType, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -270,7 +293,7 @@ func GetTransactionsByType(c *gin.Context) {
 	})
 }
 
-func GetTransactionsByAmountRange(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsByAmountRange(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -286,7 +309,7 @@ func GetTransactionsByAmountRange(c *gin.Context) {
 		return
 	}
 
-	txns, serviceErr := services.GetTransactionsByAmountRange(c, req.MinAmount, req.MaxAmount, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsByAmountRange(c, req.MinAmount, req.MaxAmount, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -298,7 +321,7 @@ func GetTransactionsByAmountRange(c *gin.Context) {
 	})
 }
 
-func GetTransactionsWithFilters(c *gin.Context) {
+func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
 	userId, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -364,7 +387,7 @@ func GetTransactionsWithFilters(c *gin.Context) {
 		filters["max_amount"] = *req.MaxAmount
 	}
 
-	txns, serviceErr := services.GetTransactionsWithFilters(c, filters, userId)
+	txns, serviceErr := ctrl.service.GetTransactionsWithFilters(c, filters, userId)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return

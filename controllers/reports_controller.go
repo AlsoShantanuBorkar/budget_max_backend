@@ -11,7 +11,29 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetBudgetSummary(c *gin.Context) {
+type ReportsControllerInterface interface {
+	GetBudgetSummary(c *gin.Context)
+	GetWeeklySummary(c *gin.Context)
+	GetMonthlySummary(c *gin.Context)
+	GetYearlySummary(c *gin.Context)
+	GetCategorySummary(c *gin.Context)
+	GetCustomDateRangeSummary(c *gin.Context)
+	GetDailyAverageSummary(c *gin.Context)
+	GetTopCategories(c *gin.Context)
+	GetAllCategoriesSummary(c *gin.Context)
+}
+
+type ReportsController struct {
+	service services.ReportsServiceInterface
+}
+
+func NewReportsController(service services.ReportsServiceInterface) *ReportsController {
+	return &ReportsController{
+		service: service,
+	}
+}
+
+func (ctrl *ReportsController) GetBudgetSummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -24,7 +46,7 @@ func GetBudgetSummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetBudgetSummary(c, budgetID, userID)
+	summary, serviceErr := ctrl.service.GetBudgetSummary(c, budgetID, userID)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -33,7 +55,7 @@ func GetBudgetSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetWeeklySummary(c *gin.Context) {
+func (ctrl *ReportsController) GetWeeklySummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -54,7 +76,7 @@ func GetWeeklySummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetWeeklySummary(c, userID, startDate, endDate)
+	summary, serviceErr := ctrl.service.GetWeeklySummary(c, userID, startDate, endDate)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -63,7 +85,7 @@ func GetWeeklySummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetMonthlySummary(c *gin.Context) {
+func (ctrl *ReportsController) GetMonthlySummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -76,7 +98,7 @@ func GetMonthlySummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetMonthlySummary(c, userID, month)
+	summary, serviceErr := ctrl.service.GetMonthlySummary(c, userID, month)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -85,7 +107,7 @@ func GetMonthlySummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetYearlySummary(c *gin.Context) {
+func (ctrl *ReportsController) GetYearlySummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -98,7 +120,7 @@ func GetYearlySummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetYearlySummary(c, userID, year)
+	summary, serviceErr := ctrl.service.GetYearlySummary(c, userID, year)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -107,7 +129,7 @@ func GetYearlySummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetCategorySummary(c *gin.Context) {
+func (ctrl *ReportsController) GetCategorySummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -120,7 +142,7 @@ func GetCategorySummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetCategorySummary(c, userID, categoryID)
+	summary, serviceErr := ctrl.service.GetCategorySummary(c, userID, categoryID)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -129,7 +151,7 @@ func GetCategorySummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetCustomDateRangeSummary(c *gin.Context) {
+func (ctrl *ReportsController) GetCustomDateRangeSummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -150,7 +172,7 @@ func GetCustomDateRangeSummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetCustomDateRangeSummary(c, userID, startDate, endDate)
+	summary, serviceErr := ctrl.service.GetCustomDateRangeSummary(c, userID, startDate, endDate)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -159,7 +181,7 @@ func GetCustomDateRangeSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetDailyAverageSummary(c *gin.Context) {
+func (ctrl *ReportsController) GetDailyAverageSummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -180,7 +202,7 @@ func GetDailyAverageSummary(c *gin.Context) {
 		return
 	}
 
-	summary, serviceErr := services.GetDailyAverageSummary(c, userID, startDate, endDate)
+	summary, serviceErr := ctrl.service.GetDailyAverageSummary(c, userID, startDate, endDate)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -189,7 +211,7 @@ func GetDailyAverageSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-func GetTopCategories(c *gin.Context) {
+func (ctrl *ReportsController) GetTopCategories(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
@@ -208,7 +230,7 @@ func GetTopCategories(c *gin.Context) {
 		return
 	}
 
-	categories, serviceErr := services.GetTopCategories(c, userID, limit, transactionType)
+	categories, serviceErr := ctrl.service.GetTopCategories(c, userID, limit, transactionType)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
@@ -217,13 +239,13 @@ func GetTopCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, categories)
 }
 
-func GetAllCategoriesSummary(c *gin.Context) {
+func (ctrl *ReportsController) GetAllCategoriesSummary(c *gin.Context) {
 	userID, ok := utils.ParseUserID(c)
 	if !ok {
 		return
 	}
 
-	summaries, serviceErr := services.GetAllCategoriesSummary(c, userID)
+	summaries, serviceErr := ctrl.service.GetAllCategoriesSummary(c, userID)
 	if serviceErr != nil {
 		c.JSON(serviceErr.Code, gin.H{"message": serviceErr.Message})
 		return
