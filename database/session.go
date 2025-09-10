@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type SessionRepository interface {	
+type SessionDatabaseServiceInterface interface {
 	CreateSession(session *models.Session) error
 	GetSessionByToken(token uuid.UUID) (*models.Session, error)
 	DeleteSession(sessionID uuid.UUID) error
@@ -17,7 +17,7 @@ type SessionDatabaseService struct {
 	database *gorm.DB
 }
 
-func NewSessionDatabaseService(db *gorm.DB) SessionRepository {
+func NewSessionDatabaseService(db *gorm.DB) SessionDatabaseServiceInterface {
 	return &SessionDatabaseService{database: db}
 }
 

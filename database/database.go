@@ -10,39 +10,21 @@ import (
 	// update with your actual module path
 )
 
-var database *gorm.DB
-
-var budgetDBService *BudgetService
-var categoryDBService *CategoryDatabaseService
-var transactionDBService *TransactionDatabaseService
-var userDBService *UserDatabaseService
-var sessionDBService *SessionDatabaseService
-var refreshTokenDBService RefreshTokenDatabaseService
-
 // Init loads env, connects to DB, runs migrations
-func Init() {
+func Init() (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s", config.Config.DBHost, config.Config.DBPort, config.Config.DBUser, config.Config.DBName, config.Config.DBSSLMode)
 
 	// Open DB connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-		panic(err)
+		return nil, err
+
 	}
-	database = db
 
 	var result string
-	database.Raw("SELECT current_database();").Scan(&result)
+	db.Raw("SELECT current_database();").Scan(&result)
 
 	log.Printf("Connected to database: %s", result)
 
-	// Initialize services
-	budgetDBService = &BudgetService{database: database}
-	categoryDBService = &CategoryDatabaseService{database: database}
-	transactionDBService = &TransactionDatabaseService{database: database}
-	userDBService = &UserDatabaseService{database: database}
-	sessionDBService = &SessionDatabaseService{database: database}
-	refreshTokenDBService = RefreshTokenDatabaseService{database: database}
-
-	log.Println("Database services initialized")
+	return db, nil
 }

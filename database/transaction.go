@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type TransactionRepository interface {
-	CreateTransation(txn *models.Transaction) error
+type TransactionDatabaseServiceInterface interface {
+	CreateTransaction(txn *models.Transaction) error
 	GetTransactionsByUser(userID uuid.UUID) ([]*models.Transaction, error)
 	UpdateTransaction(id uuid.UUID, updates map[string]any) error
 	DeleteTransaction(id uuid.UUID) error
@@ -26,25 +26,29 @@ type TransactionDatabaseService struct {
 	database *gorm.DB
 }
 
+func NewTransactionDatabaseService(db *gorm.DB) TransactionDatabaseServiceInterface {
+	return &TransactionDatabaseService{database: db}
+}
+
 func (s *TransactionDatabaseService) CreateTransaction(txn *models.Transaction) error {
 	return s.database.Create(txn).Error
 }
 
-func (s * TransactionDatabaseService)GetTransactionsByUser(userID uuid.UUID) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByUser(userID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ?", userID).Find(&txns).Error
 	return txns, err
 }
 
-func (s * TransactionDatabaseService)UpdateTransaction(id uuid.UUID, updates map[string]any) error {
+func (s *TransactionDatabaseService) UpdateTransaction(id uuid.UUID, updates map[string]any) error {
 	return s.database.Model(&models.Transaction{}).Where("id = ?", id).Updates(updates).Error
 }
 
-func (s * TransactionDatabaseService)DeleteTransaction(id uuid.UUID) error {
+func (s *TransactionDatabaseService) DeleteTransaction(id uuid.UUID) error {
 	return s.database.Delete(&models.Transaction{}, "id = ?", id).Error
 }
 
-func (s * TransactionDatabaseService)GetTransactionByID(txnId uuid.UUID, userId uuid.UUID) (*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionByID(txnId uuid.UUID, userId uuid.UUID) (*models.Transaction, error) {
 	var txn models.Transaction
 	err := s.database.First(&txn, "id = ? AND user_id = ?", txnId, userId).Error
 	if err != nil {
@@ -54,42 +58,42 @@ func (s * TransactionDatabaseService)GetTransactionByID(txnId uuid.UUID, userId 
 }
 
 // GetTransactionsByBudget returns all transactions for a specific budget
-func (s * TransactionDatabaseService)GetTransactionsByBudget(userID uuid.UUID, budgetID uuid.UUID) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByBudget(userID uuid.UUID, budgetID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND budget_id = ?", userID, budgetID).Find(&txns).Error
 	return txns, err
 }
 
 // GetTransactionsByCategory returns all transactions for a specific category
-func (s * TransactionDatabaseService)GetTransactionsByCategory(userID uuid.UUID, categoryID uuid.UUID) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByCategory(userID uuid.UUID, categoryID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND category_id = ?", userID, categoryID).Find(&txns).Error
 	return txns, err
 }
 
 // GetTransactionsByDateRange returns all transactions within a date range
-func (s * TransactionDatabaseService)GetTransactionsByDateRange(userID uuid.UUID, startDate, endDate time.Time) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByDateRange(userID uuid.UUID, startDate, endDate time.Time) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND date >= ? AND date <= ?", userID, startDate, endDate).Find(&txns).Error
 	return txns, err
 }
 
 // GetTransactionsByType returns all transactions of a specific type (expense/income)
-func (s * TransactionDatabaseService)GetTransactionsByType(userID uuid.UUID, transactionType string) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByType(userID uuid.UUID, transactionType string) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND type = ?", userID, transactionType).Find(&txns).Error
 	return txns, err
 }
 
 // GetTransactionsByAmountRange returns all transactions within an amount range
-func (s * TransactionDatabaseService)GetTransactionsByAmountRange(userID uuid.UUID, minAmount, maxAmount float64) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsByAmountRange(userID uuid.UUID, minAmount, maxAmount float64) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND amount >= ? AND amount <= ?", userID, minAmount, maxAmount).Find(&txns).Error
 	return txns, err
 }
 
 // GetTransactionsWithFilters returns transactions with multiple optional filters
-func (s * TransactionDatabaseService)GetTransactionsWithFilters(userID uuid.UUID, filters map[string]interface{}) ([]*models.Transaction, error) {
+func (s *TransactionDatabaseService) GetTransactionsWithFilters(userID uuid.UUID, filters map[string]interface{}) ([]*models.Transaction, error) {
 	query := s.database.Where("user_id = ?", userID)
 
 	if budgetID, ok := filters["budget_id"].(uuid.UUID); ok {

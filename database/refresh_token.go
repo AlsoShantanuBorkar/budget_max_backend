@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type RefreshTokenRepository interface {	
+type RefreshTokenDatabaseServiceInterface interface {
 	CreateRefreshToken(token *models.RefreshToken) error
 	GetRefreshTokenByToken(token uuid.UUID) (*models.RefreshToken, error)
 	RevokeRefreshToken(tokenID uuid.UUID) error
@@ -18,7 +18,7 @@ type RefreshTokenDatabaseService struct {
 	database *gorm.DB
 }
 
-func NewRefreshTokenDatabaseService(db *gorm.DB) RefreshTokenRepository {
+func NewRefreshTokenDatabaseService(db *gorm.DB) RefreshTokenDatabaseServiceInterface {
 	return &RefreshTokenDatabaseService{database: db}
 }
 

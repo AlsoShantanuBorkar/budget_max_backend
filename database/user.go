@@ -8,17 +8,19 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-type UserRepository interface {
+
+type UserDatabaseServiceInterface interface {
 	CreateUser(user *models.User) error
 	GetUserByID(id uuid.UUID) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	UpdateUser(userID uuid.UUID, updates map[string]interface{}) error
 	DeleteUser(id uuid.UUID) error
-}	
+}
 type UserDatabaseService struct {
 	database *gorm.DB
 }
-func NewUserDatabaseService(db *gorm.DB) UserRepository {
+
+func NewUserDatabaseService(db *gorm.DB) UserDatabaseServiceInterface {
 	return &UserDatabaseService{database: db}
 }
 
