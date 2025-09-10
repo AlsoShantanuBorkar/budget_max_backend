@@ -6,6 +6,7 @@ import (
 	"github.com/AlsoShantanuBorkar/budget_max/config"
 	"github.com/AlsoShantanuBorkar/budget_max/controllers"
 	"github.com/AlsoShantanuBorkar/budget_max/database"
+	"github.com/AlsoShantanuBorkar/budget_max/middleware"
 	"github.com/AlsoShantanuBorkar/budget_max/redis"
 	"github.com/AlsoShantanuBorkar/budget_max/routes"
 	"github.com/AlsoShantanuBorkar/budget_max/services"
@@ -23,6 +24,9 @@ func main() {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
 	utils.InitializeValidator()
+
+	utils.InitLogger()
+
 	db, err := database.Init(config)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -34,6 +38,8 @@ func main() {
 
 	r := gin.Default()
 	api := r.Group("/api/v1")
+	r.Use(middleware.RequestIDMiddleware())
+	r.Use(middleware.ErrorMiddleware())
 
 	// Initialize Database Services
 	userDatabaseService := database.NewUserDatabaseService(db)
