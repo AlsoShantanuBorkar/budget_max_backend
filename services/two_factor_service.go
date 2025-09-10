@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
@@ -114,7 +115,11 @@ func LoginWith2FA(c *gin.Context, req *models.TwoFactorLoginRequest) (*TwoFALogi
 	token, claims, err := utils.VerifyJWT(req.Token)
 
 	if err != nil || !token || !claims.Is2FA {
-		return nil, NewServiceError(http.StatusUnauthorized, "token is invalid or expired")
+		return nil, NewServiceError(http.StatusUnauthorized, "token is invalid")
+	}
+
+	if claims.RegisteredClaims.ExpiresAt.Before(time.Now()) {
+		return nil, NewServiceError(http.StatusUnauthorized, "token is expired")
 	}
 
 	if claims.Email != req.Email {

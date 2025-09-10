@@ -22,6 +22,7 @@ type LoginResponse struct {
 type RefreshResponse struct {
 	Session uuid.UUID `json:"session"`
 	Refresh uuid.UUID `json:"refresh"`
+	UserID  uuid.UUID `json:"user_id"`
 }
 
 func Signup(c *gin.Context, req *models.AuthRequest) *ServiceError {
@@ -60,13 +61,18 @@ func Login(c *gin.Context, req *models.AuthRequest) (*LoginResponse, *ServiceErr
 	// Get user by email
 	user, err := database.GetUserByEmail(req.Email)
 	if err != nil || user == nil {
-		_ = utils.CheckAndTrackLoginAttempts(req.Email)
+		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email); trackErr != nil {
+			return nil, NewServiceError(http.StatusTooManyRequests, trackErr.Error())
+		}
 		return nil, NewServiceError(http.StatusUnauthorized, "invalid email or password")
 	}
 
 	// Check password
 	if err := utils.CheckPasswordHash(req.Password, user.Password); err != nil {
-		_ = utils.CheckAndTrackLoginAttempts(req.Email)
+		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email); trackErr != nil {
+			// If the account is now locked, return that specific message.
+			return nil, NewServiceError(http.StatusTooManyRequests, trackErr.Error())
+		}
 		return nil, NewServiceError(http.StatusUnauthorized, "invalid email or password")
 	}
 
@@ -160,5 +166,6 @@ func RefreshToken(c *gin.Context, req *models.RefreshTokensRequest) (*RefreshRes
 	return &RefreshResponse{
 		Session: session.Token,
 		Refresh: refresh.Token,
+		UserID:  user.ID,
 	}, nil
 }

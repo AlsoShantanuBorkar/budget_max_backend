@@ -10,7 +10,7 @@ import (
 const (
 	MaxLoginAttempts = 5
 	LoginWindow      = 10 * time.Minute
-	LoginLockTime    = 1 * time.Hour
+	LoginLockTime    = 5 * time.Minute
 )
 
 func CheckAndTrackLoginAttempts(email string) error {
@@ -26,21 +26,23 @@ func CheckAndTrackLoginAttempts(email string) error {
 		return fmt.Errorf("account is locked due to too many login attempts")
 	}
 
-	attempts, err := redis.Client.Incr(redis.Ctx, attemptKey).Result()
+	// Use a pipeline to make INCR and EXPIRE atomic
+	pipe := redis.Client.Pipeline()
+	attemptsCmd := pipe.Incr(redis.Ctx, attemptKey)
+	pipe.Expire(redis.Ctx, attemptKey, LoginWindow)
+	_, err = pipe.Exec(redis.Ctx)
+
 	if err != nil {
-		return fmt.Errorf("failed to get login attempts: %w", err)
+		return fmt.Errorf("failed to track login attempts: %w", err)
 	}
 
-	if attempts == 1 {
-		redis.Client.Expire(redis.Ctx, attemptKey, LoginWindow)
-	}
+	attempts := attemptsCmd.Val()
 
 	if attempts >= MaxLoginAttempts {
 		redis.Client.Set(redis.Ctx, lockKey, "1", LoginLockTime)
 		return fmt.Errorf("account is locked due to too many login attempts")
 	}
 
-	redis.Client.Expire(redis.Ctx, attemptKey, LoginWindow)
 	return nil
 }
 
