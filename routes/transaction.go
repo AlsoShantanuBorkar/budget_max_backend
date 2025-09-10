@@ -2,25 +2,26 @@ package routes
 
 import (
 	"github.com/AlsoShantanuBorkar/budget_max/controllers"
+	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/middleware"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterTransactionRoutes(rg *gin.RouterGroup) {
+func RegisterTransactionRoutes(rg *gin.RouterGroup, ctrl controllers.TransactionControllerInterface, sessionDatabaseService database.SessionDatabaseServiceInterface) {
 	transaction := rg.Group("/transaction")
 
-	transaction.Use(middleware.AuthMiddleware())
+	transaction.Use(middleware.AuthMiddleware(sessionDatabaseService))
 
-	transaction.GET("/", controllers.GetTransactionsByUserID)
-	transaction.POST("/", controllers.CreateTransaction)
-	transaction.GET("/date-range", controllers.GetTransactionsByDateRange)
-	transaction.GET("/amount-range", controllers.GetTransactionsByAmountRange)
-	transaction.GET("/filters", controllers.GetTransactionsWithFilters)
+	transaction.GET("/", ctrl.GetTransactionsByUserID)
+	transaction.POST("/", ctrl.CreateTransaction)
+	transaction.GET("/date-range", ctrl.GetTransactionsByDateRange)
+	transaction.GET("/amount-range", ctrl.GetTransactionsByAmountRange)
+	transaction.GET("/filters", ctrl.GetTransactionsWithFilters)
 
-	transaction.GET("/budget/:budget_id", controllers.GetTransactionsByBudget)
-	transaction.GET("/category/:category_id", controllers.GetTransactionsByCategory)
-	transaction.GET("/type/:type", controllers.GetTransactionsByType)
-	transaction.GET("/id/:id", controllers.GetTransactionByID)
-	transaction.PUT("/id/:id", controllers.UpdateTransaction)
-	transaction.DELETE("/id/:id", controllers.DeleteTransaction)
+	transaction.GET("/budget/:budget_id", ctrl.GetTransactionsByBudget)
+	transaction.GET("/category/:category_id", ctrl.GetTransactionsByCategory)
+	transaction.GET("/type/:type", ctrl.GetTransactionsByType)
+	transaction.GET("/id/:id", ctrl.GetTransactionByID)
+	transaction.PUT("/id/:id", ctrl.UpdateTransaction)
+	transaction.DELETE("/id/:id", ctrl.DeleteTransaction)
 }

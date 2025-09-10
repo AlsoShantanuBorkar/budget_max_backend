@@ -2,26 +2,27 @@ package routes
 
 import (
 	"github.com/AlsoShantanuBorkar/budget_max/controllers"
+	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/middleware"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterReportsRoutes(rg *gin.RouterGroup) {
+func RegisterReportsRoutes(rg *gin.RouterGroup, ctrl controllers.ReportsControllerInterface, sessionDatabaseService database.SessionDatabaseServiceInterface) {
 	reportsGroup := rg.Group("/reports")
-	reportsGroup.Use(middleware.AuthMiddleware())
+	reportsGroup.Use(middleware.AuthMiddleware(sessionDatabaseService))
 
 	// Budget reports
-	reportsGroup.GET("/budget/:budget_id", controllers.GetBudgetSummary)
+	reportsGroup.GET("/budget/:budget_id", ctrl.GetBudgetSummary)
 
 	// Time-based reports
-	reportsGroup.GET("/weekly", controllers.GetWeeklySummary)
-	reportsGroup.GET("/monthly", controllers.GetMonthlySummary)
-	reportsGroup.GET("/yearly", controllers.GetYearlySummary)
-	reportsGroup.GET("/custom-range", controllers.GetCustomDateRangeSummary)
-	reportsGroup.GET("/daily-average", controllers.GetDailyAverageSummary)
+	reportsGroup.GET("/weekly", ctrl.GetWeeklySummary)
+	reportsGroup.GET("/monthly", ctrl.GetMonthlySummary)
+	reportsGroup.GET("/yearly", ctrl.GetYearlySummary)
+	reportsGroup.GET("/custom-range", ctrl.GetCustomDateRangeSummary)
+	reportsGroup.GET("/daily-average", ctrl.GetDailyAverageSummary)
 
 	// Category reports
-	reportsGroup.GET("/category/:category_id", controllers.GetCategorySummary)
-	reportsGroup.GET("/categories", controllers.GetAllCategoriesSummary)
-	reportsGroup.GET("/top-categories", controllers.GetTopCategories)
+	reportsGroup.GET("/category/:category_id", ctrl.GetCategorySummary)
+	reportsGroup.GET("/categories", ctrl.GetAllCategoriesSummary)
+	reportsGroup.GET("/top-categories", ctrl.GetTopCategories)
 }
