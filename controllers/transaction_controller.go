@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateTransation(c *gin.Context) {
+func CreateTransaction(c *gin.Context) {
 	var req models.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid Request"})
@@ -156,7 +156,7 @@ func GetTransactionsByBudget(c *gin.Context) {
 		return
 	}
 
-	budgetIDStr := c.Param("budgetId")
+	budgetIDStr := c.Param("budget_id")
 	budgetID, err := uuid.Parse(budgetIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

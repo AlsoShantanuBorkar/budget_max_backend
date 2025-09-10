@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/AlsoShantanuBorkar/budget_max/models"
@@ -97,8 +96,8 @@ func Logout(c *gin.Context) {
 
 func RefreshToken(c *gin.Context) {
 	var req models.RefreshTokensRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Println(req)
+	
+	if err := c.ShouldBindJSON(&req); err != nil {		
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Request",
 		})
