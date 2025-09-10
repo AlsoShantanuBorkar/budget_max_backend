@@ -8,24 +8,37 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-func CreateUser(user *models.User) error {
-	return DB.Create(user).Error
+type UserRepository interface {
+	CreateUser(user *models.User) error
+	GetUserByID(id uuid.UUID) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
+	UpdateUser(userID uuid.UUID, updates map[string]interface{}) error
+	DeleteUser(id uuid.UUID) error
+}	
+type UserDatabaseService struct {
+	database *gorm.DB
+}
+func NewUserDatabaseService(db *gorm.DB) UserRepository {
+	return &UserDatabaseService{database: db}
 }
 
-func GetUserByID(id uuid.UUID) (*models.User, error) {
+func (s *UserDatabaseService) CreateUser(user *models.User) error {
+	return s.database.Create(user).Error
+}
+
+func (s *UserDatabaseService) GetUserByID(id uuid.UUID) (*models.User, error) {
 	var user models.User
-	err := DB.First(&user, "id = ?", id).Error
+	err := s.database.First(&user, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &user, err
 }
 
-func GetUserByEmail(email string) (*models.User, error) {
+func (s *UserDatabaseService) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 
-	err := DB.Debug().First(&user, "LOWER(email) = LOWER(?)", strings.TrimSpace(email)).Error
+	err := s.database.Debug().First(&user, "LOWER(email) = LOWER(?)", strings.TrimSpace(email)).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -33,10 +46,10 @@ func GetUserByEmail(email string) (*models.User, error) {
 	return &user, err
 }
 
-func UpdateUser(userID uuid.UUID, updates map[string]interface{}) error {
-	return DB.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
+func (s *UserDatabaseService) UpdateUser(userID uuid.UUID, updates map[string]interface{}) error {
+	return s.database.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
 }
 
-func DeleteUser(id uuid.UUID) error {
-	return DB.Delete(&models.User{}, "id = ?", id).Error
+func (s *UserDatabaseService) DeleteUser(id uuid.UUID) error {
+	return s.database.Delete(&models.User{}, "id = ?", id).Error
 }

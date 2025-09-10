@@ -3,25 +3,41 @@ package database
 import (
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-func CreateSession(session *models.Session) error {
-	return DB.Create(session).Error
+type SessionRepository interface {	
+	CreateSession(session *models.Session) error
+	GetSessionByToken(token uuid.UUID) (*models.Session, error)
+	DeleteSession(sessionID uuid.UUID) error
+	RevokeSession(tokenID uuid.UUID) error
 }
 
-func GetSessionByToken(token uuid.UUID) (*models.Session, error) {
+type SessionDatabaseService struct {
+	database *gorm.DB
+}
+
+func NewSessionDatabaseService(db *gorm.DB) SessionRepository {
+	return &SessionDatabaseService{database: db}
+}
+
+func (s *SessionDatabaseService) CreateSession(session *models.Session) error {
+	return s.database.Create(session).Error
+}
+
+func (s *SessionDatabaseService) GetSessionByToken(token uuid.UUID) (*models.Session, error) {
 	var session models.Session
-	err := DB.Where("token = ? AND revoked = false", token).First(&session).Error
+	err := s.database.Where("token = ? AND revoked = false", token).First(&session).Error
 	if err != nil {
 		return nil, err
 	}
 	return &session, nil
 }
 
-func DeleteSession(sessionID uuid.UUID) error {
-	return DB.Delete(&models.Session{}, "id = ?", sessionID).Error
+func (s *SessionDatabaseService) DeleteSession(sessionID uuid.UUID) error {
+	return s.database.Delete(&models.Session{}, "id = ?", sessionID).Error
 }
 
-func RevokeSession(tokenID uuid.UUID) error {
-	return DB.Model(&models.Session{}).Where("id = ?", tokenID).Update("revoked", true).Error
+func (s *SessionDatabaseService) RevokeSession(tokenID uuid.UUID) error {
+	return s.database.Model(&models.Session{}).Where("id = ?", tokenID).Update("revoked", true).Error
 }

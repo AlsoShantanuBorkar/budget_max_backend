@@ -10,7 +10,14 @@ import (
 	// update with your actual module path
 )
 
-var DB *gorm.DB
+var database *gorm.DB
+
+var budgetDBService *BudgetService
+var categoryDBService *CategoryDatabaseService
+var transactionDBService *TransactionDatabaseService
+var userDBService *UserDatabaseService
+var sessionDBService *SessionDatabaseService
+var refreshTokenDBService RefreshTokenDatabaseService
 
 // Init loads env, connects to DB, runs migrations
 func Init() {
@@ -22,16 +29,20 @@ func Init() {
 		log.Fatalf("Failed to connect to database: %v", err)
 		panic(err)
 	}
-	DB = db
+	database = db
 
 	var result string
-	DB.Raw("SELECT current_database();").Scan(&result)
-}
+	database.Raw("SELECT current_database();").Scan(&result)
 
-// func migrate() {
-// 	// Add all your models here
-// 	err := DB.AutoMigrate()
-// 	if err != nil {
-// 		log.Fatalf("Failed to migrate database: %v", err)
-// 	}
-// }
+	log.Printf("Connected to database: %s", result)
+
+	// Initialize services
+	budgetDBService = &BudgetService{database: database}
+	categoryDBService = &CategoryDatabaseService{database: database}
+	transactionDBService = &TransactionDatabaseService{database: database}
+	userDBService = &UserDatabaseService{database: database}
+	sessionDBService = &SessionDatabaseService{database: database}
+	refreshTokenDBService = RefreshTokenDatabaseService{database: database}
+
+	log.Println("Database services initialized")
+}
