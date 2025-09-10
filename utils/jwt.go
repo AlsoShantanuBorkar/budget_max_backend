@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateJWT(user *models.User) (string, error) {
+func GenerateJWT(user *models.User, config *config.AppConfig) (string, error) {
 	claims := &auth.TwoFAClaims{
 		UserID: user.ID,
 		Email:  user.Email,
@@ -24,14 +24,14 @@ func GenerateJWT(user *models.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.Config.JWTSecret))
+	return token.SignedString([]byte(config.JWTSecret))
 }
 
-func VerifyJWT(token string) (bool, *models.TwoFAClaims, error) {
+func VerifyJWT(token string, config *config.AppConfig) (bool, *models.TwoFAClaims, error) {
 	claims := &models.TwoFAClaims{}
 
 	parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (any, error) {
-		return []byte(config.Config.JWTSecret), nil
+		return []byte(config.JWTSecret), nil
 	})
 
 	if err != nil {

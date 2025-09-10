@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/AlsoShantanuBorkar/budget_max/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -13,11 +14,11 @@ const (
 	LoginLockTime    = 5 * time.Minute
 )
 
-func CheckAndTrackLoginAttempts(email string) error {
+func CheckAndTrackLoginAttempts(email string, redisClient *redis.Client, ctx context.Context) error {
 	attemptKey := fmt.Sprintf("login_attempts:%s", email)
 	lockKey := fmt.Sprintf("login_lock:%s", email)
 
-	isLocked, err := redis.Client.Exists(redis.Ctx, lockKey).Result()
+	isLocked, err := redisClient.Exists(ctx, lockKey).Result()
 	if err != nil {
 		return fmt.Errorf("failed to check login lock: %w", err)
 	}
@@ -27,10 +28,10 @@ func CheckAndTrackLoginAttempts(email string) error {
 	}
 
 	// Use a pipeline to make INCR and EXPIRE atomic
-	pipe := redis.Client.Pipeline()
-	attemptsCmd := pipe.Incr(redis.Ctx, attemptKey)
-	pipe.Expire(redis.Ctx, attemptKey, LoginWindow)
-	_, err = pipe.Exec(redis.Ctx)
+	pipe := redisClient.Pipeline()
+	attemptsCmd := pipe.Incr(ctx, attemptKey)
+	pipe.Expire(ctx, attemptKey, LoginWindow)
+	_, err = pipe.Exec(ctx)
 
 	if err != nil {
 		return fmt.Errorf("failed to track login attempts: %w", err)
@@ -39,16 +40,16 @@ func CheckAndTrackLoginAttempts(email string) error {
 	attempts := attemptsCmd.Val()
 
 	if attempts >= MaxLoginAttempts {
-		redis.Client.Set(redis.Ctx, lockKey, "1", LoginLockTime)
+		redisClient.Set(ctx, lockKey, "1", LoginLockTime)
 		return fmt.Errorf("account is locked due to too many login attempts")
 	}
 
 	return nil
 }
 
-func ResetLoginAttempts(email string) {
+func ResetLoginAttempts(email string, redisClient *redis.Client, ctx context.Context) {
 	attemptKey := fmt.Sprintf("login_attempts:%s", email)
 	lockKey := fmt.Sprintf("login_lock:%s", email)
 
-	redis.Client.Del(redis.Ctx, attemptKey, lockKey)
+	redisClient.Del(ctx, attemptKey, lockKey)
 }

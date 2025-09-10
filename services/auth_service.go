@@ -4,12 +4,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AlsoShantanuBorkar/budget_max/config"
 	"github.com/AlsoShantanuBorkar/budget_max/database"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/AlsoShantanuBorkar/budget_max/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
+	"github.com/redis/go-redis/v9"
 )
 
 type LoginResponse struct {
@@ -54,13 +56,17 @@ type AuthService struct {
 	userDatabaseService         database.UserDatabaseServiceInterface
 	sessionDatabaseService      database.SessionDatabaseServiceInterface
 	refreshTokenDatabaseService database.RefreshTokenDatabaseServiceInterface
+	config                      *config.AppConfig
+	redisClient                 *redis.Client
 }
 
-func NewAuthService(userDBService database.UserDatabaseServiceInterface, sessionDBService database.SessionDatabaseServiceInterface, refreshTokenDBService database.RefreshTokenDatabaseServiceInterface) *AuthService {
+func NewAuthService(userDBService database.UserDatabaseServiceInterface, sessionDBService database.SessionDatabaseServiceInterface, refreshTokenDBService database.RefreshTokenDatabaseServiceInterface, config *config.AppConfig, redisClient *redis.Client) *AuthService {
 	return &AuthService{
 		userDatabaseService:         userDBService,
 		sessionDatabaseService:      sessionDBService,
 		refreshTokenDatabaseService: refreshTokenDBService,
+		config:                      config,
+		redisClient:                 redisClient,
 	}
 }
 
@@ -100,7 +106,7 @@ func (s *AuthService) Login(c *gin.Context, req *models.AuthRequest) (*LoginResp
 	// Get user by email
 	user, err := s.userDatabaseService.GetUserByEmail(req.Email)
 	if err != nil || user == nil {
-		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email); trackErr != nil {
+		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email, s.redisClient, c.Request.Context()); trackErr != nil {
 			return nil, NewServiceError(http.StatusTooManyRequests, trackErr.Error())
 		}
 		return nil, NewServiceError(http.StatusUnauthorized, "invalid email or password")
@@ -108,7 +114,7 @@ func (s *AuthService) Login(c *gin.Context, req *models.AuthRequest) (*LoginResp
 
 	// Check password
 	if err := utils.CheckPasswordHash(req.Password, user.Password); err != nil {
-		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email); trackErr != nil {
+		if trackErr := utils.CheckAndTrackLoginAttempts(req.Email, s.redisClient, c.Request.Context()); trackErr != nil {
 			// If the account is now locked, return that specific message.
 			return nil, NewServiceError(http.StatusTooManyRequests, trackErr.Error())
 		}
@@ -116,11 +122,11 @@ func (s *AuthService) Login(c *gin.Context, req *models.AuthRequest) (*LoginResp
 	}
 
 	// Reset login attempts on successful login
-	utils.ResetLoginAttempts(req.Email)
+	utils.ResetLoginAttempts(req.Email, s.redisClient, c.Request.Context())
 
 	// Check if 2FA is enabled
 	if user.TwoFactorEnabled {
-		token, err := utils.GenerateJWT(user)
+		token, err := utils.GenerateJWT(user, s.config)
 		if err != nil {
 			return nil, NewServiceError(http.StatusInternalServerError, "failed to generate token")
 		}
@@ -296,7 +302,7 @@ func (s *AuthService) Disable2FA(c *gin.Context, userId uuid.UUID) *ServiceError
 }
 
 func (s *AuthService) LoginWith2FA(c *gin.Context, req *models.TwoFactorLoginRequest) (*TwoFALoginResponse, *ServiceError) {
-	token, claims, err := utils.VerifyJWT(req.Token)
+	token, claims, err := utils.VerifyJWT(req.Token, s.config)
 
 	if err != nil || !token || !claims.Is2FA {
 		return nil, NewServiceError(http.StatusUnauthorized, "token is invalid")

@@ -18,14 +18,12 @@ type AppConfig struct {
 	DBSSLMode     string
 }
 
-var Config *AppConfig
-
-func InitConfig() error {
+func NewConfig() (*AppConfig, error) {
 	if err := godotenv.Load(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	Config = &AppConfig{
+	Config := &AppConfig{
 		DBHost:        os.Getenv("DB_HOST"),
 		DBPort:        os.Getenv("DB_PORT"),
 		DBUser:        os.Getenv("DB_USER"),
@@ -37,5 +35,5 @@ func InitConfig() error {
 		DBPassword:    os.Getenv("DB_PASSWORD"),
 	}
 
-	return nil
+	return Config, nil
 }

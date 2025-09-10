@@ -11,8 +11,8 @@ import (
 )
 
 // Init loads env, connects to DB, runs migrations
-func Init() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s", config.Config.DBHost, config.Config.DBPort, config.Config.DBUser, config.Config.DBName, config.Config.DBSSLMode)
+func Init(config *config.AppConfig) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s", config.DBHost, config.DBPort, config.DBUser, config.DBName, config.DBSSLMode)
 
 	// Open DB connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

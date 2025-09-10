@@ -16,15 +16,22 @@ import (
 func main() {
 
 	// Initialize configuration, database, Redis, and validator
-	if err := config.InitConfig(); err != nil {
+
+	config, err := config.NewConfig()
+
+	if err != nil {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
 	utils.InitializeValidator()
-	db, err := database.Init()
+	db, err := database.Init(config)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	redis.InitRedis()
+	redisClient, err := redis.NewRedisClient(config)
+	if err != nil {
+		log.Fatalf("Failed to initialize redis: %v", err)
+	}
+
 	r := gin.Default()
 	api := r.Group("/api/v1")
 
@@ -37,7 +44,7 @@ func main() {
 	refreshTokenDatabaseService := database.NewRefreshTokenDatabaseService(db)
 
 	// Initialize Services
-	authService := services.NewAuthService(userDatabaseService, sessionDatabaseService, refreshTokenDatabaseService)
+	authService := services.NewAuthService(userDatabaseService, sessionDatabaseService, refreshTokenDatabaseService, config, redisClient)
 	budgetService := services.NewBudgetService(budgetDatabaseService)
 	categoryService := services.NewCategoryService(categoryDatabaseService)
 	transactionService := services.NewTransactionService(transactionDatabaseService)
