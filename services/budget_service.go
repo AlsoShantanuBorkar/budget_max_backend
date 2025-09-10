@@ -10,7 +10,23 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateBudget(c *gin.Context, req *models.CreateBudgetRequest, userId uuid.UUID) (*models.Budget, *ServiceError) {
+type BudgetServiceInterface interface {
+	CreateBudget(c *gin.Context, req *models.CreateBudgetRequest, userId uuid.UUID) (*models.Budget, *ServiceError)
+	UpdateBudget(c *gin.Context, req *models.UpdateBudgetRequest, budgetId uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError)
+	DeleteBudget(c *gin.Context, budgetId uuid.UUID, userId uuid.UUID) *ServiceError
+	GetBudgetsByUserID(c *gin.Context, userId uuid.UUID) ([]models.Budget, *ServiceError)
+	GetBudgetByID(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError)
+}
+
+type BudgetService struct {
+	databaseService database.BudgetDatabaseServiceInterface
+}
+
+func NewBudgetService(dbService database.BudgetDatabaseServiceInterface) BudgetServiceInterface {
+	return &BudgetService{databaseService: dbService}
+}
+
+func (s *BudgetService) CreateBudget(c *gin.Context, req *models.CreateBudgetRequest, userId uuid.UUID) (*models.Budget, *ServiceError) {
 	budget := &models.Budget{
 		ID:        uuid.New(),
 		UserID:    userId,
@@ -22,16 +38,16 @@ func CreateBudget(c *gin.Context, req *models.CreateBudgetRequest, userId uuid.U
 		CreatedAt: time.Now(),
 	}
 
-	if err := database.CreateBudget(budget); err != nil {
+	if err := s.databaseService.CreateBudget(budget); err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, "failed to create budget")
 	}
 
 	return budget, nil
 }
 
-func UpdateBudget(c *gin.Context, req *models.UpdateBudgetRequest, budgetId uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError) {
+func (s *BudgetService) UpdateBudget(c *gin.Context, req *models.UpdateBudgetRequest, budgetId uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError) {
 	// Fetch existing budget to verify ownership
-	_, err := database.GetBudgetByID(budgetId, userId)
+	_, err := s.databaseService.GetBudgetByID(budgetId, userId)
 	if err != nil {
 		return nil, NewServiceError(http.StatusNotFound, "budget not found")
 	}
@@ -51,13 +67,13 @@ func UpdateBudget(c *gin.Context, req *models.UpdateBudgetRequest, budgetId uuid
 	}
 
 	// Save updated budget
-	err = database.UpdateBudget(budgetId, updates)
+	err = s.databaseService.UpdateBudget(budgetId, updates)
 	if err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, "failed to update budget")
 	}
 
 	// Fetch updated budget
-	updatedBudget, err := database.GetBudgetByID(budgetId, userId)
+	updatedBudget, err := s.databaseService.GetBudgetByID(budgetId, userId)
 	if err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch updated budget")
 	}
@@ -65,14 +81,14 @@ func UpdateBudget(c *gin.Context, req *models.UpdateBudgetRequest, budgetId uuid
 	return updatedBudget, nil
 }
 
-func DeleteBudget(c *gin.Context, budgetId uuid.UUID, userId uuid.UUID) *ServiceError {
+func (s *BudgetService) DeleteBudget(c *gin.Context, budgetId uuid.UUID, userId uuid.UUID) *ServiceError {
 	// Verify budget exists and belongs to user
-	_, err := database.GetBudgetByID(budgetId, userId)
+	_, err := s.databaseService.GetBudgetByID(budgetId, userId)
 	if err != nil {
 		return NewServiceError(http.StatusNotFound, "budget not found")
 	}
 
-	err = database.DeleteBudget(budgetId)
+	err = s.databaseService.DeleteBudget(budgetId)
 	if err != nil {
 		return NewServiceError(http.StatusInternalServerError, "failed to delete budget")
 	}
@@ -80,8 +96,8 @@ func DeleteBudget(c *gin.Context, budgetId uuid.UUID, userId uuid.UUID) *Service
 	return nil
 }
 
-func GetBudgetsByUserID(c *gin.Context, userId uuid.UUID) ([]models.Budget, *ServiceError) {
-	budgets, err := database.GetBudgetsByUser(userId)
+func (s *BudgetService) GetBudgetsByUserID(c *gin.Context, userId uuid.UUID) ([]models.Budget, *ServiceError) {
+	budgets, err := s.databaseService.GetBudgetsByUser(userId)
 	if err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch budgets")
 	}
@@ -89,8 +105,8 @@ func GetBudgetsByUserID(c *gin.Context, userId uuid.UUID) ([]models.Budget, *Ser
 	return budgets, nil
 }
 
-func GetBudgetByID(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError) {
-	budget, err := database.GetBudgetByID(budgetID, userId)
+func (s *BudgetService) GetBudgetByID(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) (*models.Budget, *ServiceError) {
+	budget, err := s.databaseService.GetBudgetByID(budgetID, userId)
 	if err != nil {
 		return nil, NewServiceError(http.StatusNotFound, "budget not found")
 	}

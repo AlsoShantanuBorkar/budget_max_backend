@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateSessionAndRefreshToken(user *models.User, ip, agent string, c *gin.Context) (models.Session, models.RefreshToken, error) {
+func CreateSessionAndRefreshToken(user *models.User, ip, agent string, sessionDatabaseService database.SessionDatabaseServiceInterface, refreshTokenDatabaseService database.RefreshTokenDatabaseServiceInterface, c *gin.Context) (models.Session, models.RefreshToken, error) {
 
 	sessionToken := uuid.New()
 	refreshToken := uuid.New()
@@ -36,11 +36,11 @@ func CreateSessionAndRefreshToken(user *models.User, ip, agent string, c *gin.Co
 		Revoked:   false,
 	}
 
-	if err := database.CreateSession(&session); err != nil {
+	if err := sessionDatabaseService.CreateSession(&session); err != nil {
 		return models.Session{}, models.RefreshToken{}, errors.New("failed to create session")
 	}
 
-	if err := database.CreateRefreshToken(&refresh); err != nil {
+	if err := refreshTokenDatabaseService.CreateRefreshToken(&refresh); err != nil {
 		return models.Session{}, models.RefreshToken{}, errors.New("failed to create refresh token")
 	}
 
