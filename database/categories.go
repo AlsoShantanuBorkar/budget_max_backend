@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 
+	appErrors "github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,7 +22,10 @@ type CategoryDatabaseService struct {
 }
 
 func (s *CategoryDatabaseService) CreateCategory(cat *models.Category) error {
-	return s.database.Create(cat).Error
+	if err := s.database.Create(cat).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func NewCategoryDatabaseService(db *gorm.DB) CategoryDatabaseServiceInterface {
@@ -34,19 +38,31 @@ func (s *CategoryDatabaseService) GetCategoryByID(id uuid.UUID, userId uuid.UUID
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	return &cat, err
+	if err != nil {
+		return nil, appErrors.NewDBError(err)
+	}
+	return &cat, nil
 }
 
 func (s *CategoryDatabaseService) GetUserCategories(userID uuid.UUID) ([]models.Category, error) {
 	var categories []models.Category
 	err := s.database.Where("user_id = ?", userID).Find(&categories).Error
-	return categories, err
+	if err != nil {
+		return nil, appErrors.NewDBError(err)
+	}
+	return categories, nil
 }
 
 func (s *CategoryDatabaseService) UpdateCategory(id uuid.UUID, updates map[string]interface{}) error {
-	return s.database.Model(&models.Category{}).Where("id = ?", id).Updates(updates).Error
+	if err := s.database.Model(&models.Category{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *CategoryDatabaseService) DeleteCategory(id uuid.UUID) error {
-	return s.database.Delete(&models.Category{}, "id = ?", id).Error
+	if err := s.database.Delete(&models.Category{}, "id = ?", id).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }

@@ -1,9 +1,8 @@
 package services
 
 import (
-	"net/http"
-
 	"github.com/AlsoShantanuBorkar/budget_max/database"
+	"github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -35,19 +34,23 @@ func (s *CategoryService) CreateCategory(c *gin.Context, req *models.CreateCateg
 		IsDefault: req.IsDefault,
 	}
 
-	if err := s.databaseService.CreateCategory(category); err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to create category")
-	}
+       if err := s.databaseService.CreateCategory(category); err != nil {
+	       appErr := errors.NewInternalError(err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return category, nil
 }
 
 func (s *CategoryService) UpdateCategory(c *gin.Context, req *models.UpdateCategoryRequest, categoryId uuid.UUID, userId uuid.UUID) (*models.Category, *ServiceError) {
 	// Fetch existing category to verify ownership
-	_, err := s.databaseService.GetCategoryByID(categoryId, userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusNotFound, "category not found")
-	}
+       _, err := s.databaseService.GetCategoryByID(categoryId, userId)
+       if err != nil {
+	       appErr := errors.NewNotFoundError("category", err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	updates := make(map[string]any)
 	if req.Name != nil {
@@ -64,49 +67,61 @@ func (s *CategoryService) UpdateCategory(c *gin.Context, req *models.UpdateCateg
 	}
 
 	// Save updated category
-	err = s.databaseService.UpdateCategory(categoryId, updates)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to update category")
-	}
+       err = s.databaseService.UpdateCategory(categoryId, updates)
+       if err != nil {
+	       appErr := errors.NewInternalError(err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	// Fetch updated category
-	updatedCategory, err := s.databaseService.GetCategoryByID(categoryId, userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch updated category")
-	}
+       updatedCategory, err := s.databaseService.GetCategoryByID(categoryId, userId)
+       if err != nil {
+	       appErr := errors.NewInternalError(err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return updatedCategory, nil
 }
 
 func (s *CategoryService) DeleteCategory(c *gin.Context, categoryId uuid.UUID, userId uuid.UUID) *ServiceError {
 	// Verify category exists and belongs to user
-	_, err := s.databaseService.GetCategoryByID(categoryId, userId)
-	if err != nil {
-		return NewServiceError(http.StatusNotFound, "category not found")
-	}
+       _, err := s.databaseService.GetCategoryByID(categoryId, userId)
+       if err != nil {
+	       appErr := errors.NewNotFoundError("category", err)
+	       c.Error(appErr)
+	       return ServiceErrorFromAppError(appErr)
+       }
 
-	err = s.databaseService.DeleteCategory(categoryId)
-	if err != nil {
-		return NewServiceError(http.StatusInternalServerError, "failed to delete category")
-	}
+       err = s.databaseService.DeleteCategory(categoryId)
+       if err != nil {
+	       appErr := errors.NewInternalError(err)
+	       c.Error(appErr)
+	       return ServiceErrorFromAppError(appErr)
+       }
 
 	return nil
 }
 
 func (s *CategoryService) GetCategoriesByUserID(c *gin.Context, userId uuid.UUID) ([]models.Category, *ServiceError) {
-	categories, err := s.databaseService.GetUserCategories(userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch categories")
-	}
+       categories, err := s.databaseService.GetUserCategories(userId)
+       if err != nil {
+	       appErr := errors.NewInternalError(err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return categories, nil
 }
 
 func (s *CategoryService) GetCategoryByID(c *gin.Context, categoryID uuid.UUID, userId uuid.UUID) (*models.Category, *ServiceError) {
-	category, err := s.databaseService.GetCategoryByID(categoryID, userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusNotFound, "category not found")
-	}
+       category, err := s.databaseService.GetCategoryByID(categoryID, userId)
+       if err != nil {
+	       appErr := errors.NewNotFoundError("category", err)
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return category, nil
 }

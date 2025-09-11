@@ -37,7 +37,8 @@ func NewReportsController(service services.ReportsServiceInterface) *ReportsCont
 func (ctrl *ReportsController) GetBudgetSummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)		   
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -45,14 +46,16 @@ func (ctrl *ReportsController) GetBudgetSummary(c *gin.Context) {
        budgetIDStr := c.Param("budget_id")
        budgetID, err := uuid.Parse(budgetIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid budget ID", err)
+	       appErr := errors.NewBadRequestError("Invalid budget ID", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetBudgetSummary(c, budgetID, userID)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -63,7 +66,8 @@ func (ctrl *ReportsController) GetBudgetSummary(c *gin.Context) {
 func (ctrl *ReportsController) GetWeeklySummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -73,21 +77,24 @@ func (ctrl *ReportsController) GetWeeklySummary(c *gin.Context) {
 
        startDate, err := time.Parse("2006-01-02", startDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        endDate, err := time.Parse("2006-01-02", endDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetWeeklySummary(c, userID, startDate, endDate)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -98,7 +105,8 @@ func (ctrl *ReportsController) GetWeeklySummary(c *gin.Context) {
 func (ctrl *ReportsController) GetMonthlySummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -106,14 +114,16 @@ func (ctrl *ReportsController) GetMonthlySummary(c *gin.Context) {
        monthStr := c.Query("month")
        month, err := time.Parse("2006-01", monthStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid month format. Use YYYY-MM", err)
+	       appErr := errors.NewBadRequestError("Invalid month format. Use YYYY-MM", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetMonthlySummary(c, userID, month)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -124,7 +134,8 @@ func (ctrl *ReportsController) GetMonthlySummary(c *gin.Context) {
 func (ctrl *ReportsController) GetYearlySummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -132,14 +143,16 @@ func (ctrl *ReportsController) GetYearlySummary(c *gin.Context) {
        yearStr := c.Query("year")
        year, err := time.Parse("2006", yearStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid year format. Use YYYY", err)
+	       appErr := errors.NewBadRequestError("Invalid year format. Use YYYY", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetYearlySummary(c, userID, year)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -150,7 +163,8 @@ func (ctrl *ReportsController) GetYearlySummary(c *gin.Context) {
 func (ctrl *ReportsController) GetCategorySummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -158,14 +172,16 @@ func (ctrl *ReportsController) GetCategorySummary(c *gin.Context) {
        categoryIDStr := c.Param("category_id")
        categoryID, err := uuid.Parse(categoryIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid category ID", err)
+	       appErr := errors.NewBadRequestError("Invalid category ID", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetCategorySummary(c, userID, categoryID)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -176,7 +192,8 @@ func (ctrl *ReportsController) GetCategorySummary(c *gin.Context) {
 func (ctrl *ReportsController) GetCustomDateRangeSummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -186,21 +203,24 @@ func (ctrl *ReportsController) GetCustomDateRangeSummary(c *gin.Context) {
 
        startDate, err := time.Parse("2006-01-02", startDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        endDate, err := time.Parse("2006-01-02", endDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetCustomDateRangeSummary(c, userID, startDate, endDate)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -211,7 +231,8 @@ func (ctrl *ReportsController) GetCustomDateRangeSummary(c *gin.Context) {
 func (ctrl *ReportsController) GetDailyAverageSummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -221,21 +242,24 @@ func (ctrl *ReportsController) GetDailyAverageSummary(c *gin.Context) {
 
        startDate, err := time.Parse("2006-01-02", startDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid start date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        endDate, err := time.Parse("2006-01-02", endDateStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err)
+	       appErr := errors.NewBadRequestError("Invalid end date format. Use YYYY-MM-DD", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summary, serviceErr := ctrl.service.GetDailyAverageSummary(c, userID, startDate, endDate)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -246,14 +270,16 @@ func (ctrl *ReportsController) GetDailyAverageSummary(c *gin.Context) {
 func (ctrl *ReportsController) GetTopCategories(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        transactionType := c.Query("type")
        if transactionType != "expense" && transactionType != "income" {
-	       appErr := errors.NewBadRequestError("Transaction type must be 'expense' or 'income'", nil)
+	       appErr := errors.NewBadRequestError("Transaction type must be 'expense' or 'income'", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -261,14 +287,16 @@ func (ctrl *ReportsController) GetTopCategories(c *gin.Context) {
        limitStr := c.DefaultQuery("limit", "5")
        limit, err := strconv.Atoi(limitStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid limit parameter", err)
+	       appErr := errors.NewBadRequestError("Invalid limit parameter", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        categories, serviceErr := ctrl.service.GetTopCategories(c, userID, limit, transactionType)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -279,14 +307,16 @@ func (ctrl *ReportsController) GetTopCategories(c *gin.Context) {
 func (ctrl *ReportsController) GetAllCategoriesSummary(c *gin.Context) {
        userID, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        summaries, serviceErr := ctrl.service.GetAllCategoriesSummary(c, userID)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }

@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/AlsoShantanuBorkar/budget_max/database"
+	"github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -14,7 +14,9 @@ func AuthMiddleware(sessionService database.SessionDatabaseServiceInterface) gin
 	return func(c *gin.Context) {
 		tokenStr := c.GetHeader("Authorization")
 		if tokenStr == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			appErr := errors.NewUnauthorizedError("Unauthorized", nil, )
+			c.Error(appErr)			
+			c.AbortWithStatusJSON(appErr.Code, gin.H{"message": appErr.Message})
 			return
 		}
 
@@ -23,19 +25,25 @@ func AuthMiddleware(sessionService database.SessionDatabaseServiceInterface) gin
 		token, err := uuid.Parse(tokenStr)
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			appErr := errors.NewUnauthorizedError("Unauthorized", err, )
+			c.Error(appErr)
+			c.AbortWithStatusJSON(appErr.Code, gin.H{"message": appErr.Message})
 			return
 		}
 
 		session, err := sessionService.GetSessionByToken(token)
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			appErr := errors.NewUnauthorizedError("Unauthorized", err, )
+			c.Error(appErr)
+			c.AbortWithStatusJSON(appErr.Code, gin.H{"message": appErr.Message})
 			return
 		}
 
 		if session.ExpiresAt.Before(time.Now()) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Session Expired"})
+			appErr := errors.NewUnauthorizedError("Session Expired", nil, )
+			c.Error(appErr)
+			c.AbortWithStatusJSON(appErr.Code, gin.H{"message": appErr.Message})
 			return
 		}
 

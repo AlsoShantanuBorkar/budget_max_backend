@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/AlsoShantanuBorkar/budget_max/errors"
@@ -8,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ErrorMiddleware() gin.HandlerFunc {
+func LoggerMiddleware() gin.HandlerFunc {
        return func(c *gin.Context) {
 	       start := time.Now()
 	       c.Next()
@@ -17,26 +18,30 @@ func ErrorMiddleware() gin.HandlerFunc {
 	       logger := utils.GetLogger()
 
 	       if len(c.Errors) > 0 {
-		       err := c.Errors.Last().Err
+			fmt.Println("Error Middleware Triggered")
+		       for _, e := range c.Errors {
+				err := e.Err
 		       appErr, ok := err.(*errors.AppError)
 
 		       if !ok {
-			       appErr = errors.NewInternalError(err)
+			       appErr = errors.NewInternalError(err, )
 		       }
 
-		       logger.Error().
+		       logger.Error().			   	
 			       Str("request_id", requestID).
 			       Int("status", appErr.Code).
 			       Dur("latency", latency).
 			       Str("method", c.Request.Method).
 			       Str("path", c.Request.URL.Path).
+			   		
 			       Err(appErr.Err).
 			       Msg(appErr.Message)
 
-		       c.JSON(appErr.Code, gin.H{
+		       c.AbortWithStatusJSON(appErr.Code, gin.H{
 			       "message": appErr.Message,
 		       })
-		       return
+			}
+			return
 	       }
 	       logger.Info().
 		       Str("request_id", requestID).

@@ -26,20 +26,23 @@ func main() {
 	utils.InitializeValidator()
 
 	utils.InitLogger()
+	utils.StartDailyRotation()
 
 	db, err := database.Init(config)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+
 	redisClient, err := redis.NewRedisClient(config)
+	
 	if err != nil {
 		log.Fatalf("Failed to initialize redis: %v", err)
 	}
 
-	r := gin.Default()
-	api := r.Group("/api/v1")
+	r := gin.New()
 	r.Use(middleware.RequestIDMiddleware())
-	r.Use(middleware.ErrorMiddleware())
+	r.Use(middleware.LoggerMiddleware())
+	api := r.Group("/api/v1")
 
 	// Initialize Database Services
 	userDatabaseService := database.NewUserDatabaseService(db)

@@ -32,26 +32,30 @@ func NewCategoryController(service services.CategoryServiceInterface) *CategoryC
 func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 	var req models.CreateCategoryRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        category, serviceErr := ctrl.service.CreateCategory(c, &req, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -67,14 +71,16 @@ func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 func (ctrl *CategoryController) GetAllCategories(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        categories, serviceErr := ctrl.service.GetCategoriesByUserID(c, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -88,7 +94,8 @@ func (ctrl *CategoryController) GetAllCategories(c *gin.Context) {
 func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -96,14 +103,16 @@ func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
        categoryIDStr := c.Param("id")
        categoryID, err := uuid.Parse(categoryIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Category ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid Category ID format", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        category, serviceErr := ctrl.service.GetCategoryByID(c, categoryID, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -117,7 +126,8 @@ func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
 func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -125,13 +135,15 @@ func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
        var req models.UpdateCategoryRequest
 
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -139,14 +151,16 @@ func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
        categoryIdStr := c.Param("id")
        categoryId, err := uuid.Parse(categoryIdStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid category ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid category ID format", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        updatedCategory, serviceErr := ctrl.service.UpdateCategory(c, &req, categoryId, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -160,7 +174,8 @@ func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
 func (ctrl *CategoryController) DeleteCategory(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -168,14 +183,16 @@ func (ctrl *CategoryController) DeleteCategory(c *gin.Context) {
        categoryIdStr := c.Param("id")
        categoryId, err := uuid.Parse(categoryIdStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid category ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid category ID format", err, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        serviceErr := ctrl.service.DeleteCategory(c, categoryId, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+		   c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }

@@ -33,20 +33,23 @@ func (ctrl *AuthController) Signup(c *gin.Context) {
 	var req models.AuthRequest
 
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        serviceErr := ctrl.service.Signup(c, &req)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -60,20 +63,23 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	var req models.AuthRequest
 
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        response, serviceErr := ctrl.service.Login(c, &req)
        if serviceErr != nil {
-	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr)
+	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -103,7 +109,8 @@ func (ctrl *AuthController) Logout(c *gin.Context) {
 
        serviceErr := ctrl.service.Logout(c, sessionTokenStr)
        if serviceErr != nil {
-	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr)
+	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -117,20 +124,23 @@ func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 	var req models.RefreshTokensRequest
 
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        response, serviceErr := ctrl.service.RefreshToken(c, &req)
        if serviceErr != nil {
-	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr)
+	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -148,14 +158,16 @@ func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 func (ctrl *AuthController) Generate2FA(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        response, serviceErr := ctrl.service.Generate2FA(c, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -169,27 +181,31 @@ func (ctrl *AuthController) Generate2FA(c *gin.Context) {
 func (ctrl *AuthController) Verify2FA(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        var request models.TwoFactorVerifyRequest
        if err := c.ShouldBindJSON(&request); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(request); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        serviceErr := ctrl.service.Verify2FA(c, &request, userId)
        if serviceErr != nil {
-	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr)
+	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -202,14 +218,16 @@ func (ctrl *AuthController) Verify2FA(c *gin.Context) {
 func (ctrl *AuthController) Disable2FA(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        serviceErr := ctrl.service.Disable2FA(c, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -222,20 +240,23 @@ func (ctrl *AuthController) Disable2FA(c *gin.Context) {
 func (ctrl *AuthController) LoginWith2FA(c *gin.Context) {
        var request models.TwoFactorLoginRequest
        if err := c.ShouldBindJSON(&request); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(request); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        response, serviceErr := ctrl.service.LoginWith2FA(c, &request)
        if serviceErr != nil {
-	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr)
+	       appErr := errors.NewUnauthorizedError(serviceErr.Message, serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }

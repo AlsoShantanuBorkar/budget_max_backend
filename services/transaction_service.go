@@ -1,10 +1,11 @@
 package services
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/AlsoShantanuBorkar/budget_max/database"
+	"github.com/AlsoShantanuBorkar/budget_max/errors"
+
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -37,14 +38,18 @@ func NewTransactionService(dbService database.TransactionDatabaseServiceInterfac
 func (s *TransactionService) CreateTransaction(c *gin.Context, req *models.CreateTransactionRequest, userId uuid.UUID) (*models.Transaction, *ServiceError) {
 	date, err := time.Parse(time.RFC3339, req.Date)
 	if err != nil {
-		return nil, NewServiceError(http.StatusBadRequest, "invalid date format")
+		appErr := errors.NewBadRequestError("invalid date format", err,)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
 	var categoryID *uuid.UUID
 	if req.CategoryIDs != "" {
 		catID, err := uuid.Parse(req.CategoryIDs)
 		if err != nil {
-			return nil, NewServiceError(http.StatusBadRequest, "invalid category ID")
+			appErr := errors.NewBadRequestError("invalid category ID", err,)
+			c.Error(appErr)
+			return nil, ServiceErrorFromAppError(appErr)
 		}
 		categoryID = &catID
 	}
@@ -53,7 +58,9 @@ func (s *TransactionService) CreateTransaction(c *gin.Context, req *models.Creat
 	if req.BudgetID != "" {
 		budID, err := uuid.Parse(req.BudgetID)
 		if err != nil {
-			return nil, NewServiceError(http.StatusBadRequest, "invalid budget ID")
+			appErr := errors.NewBadRequestError("invalid budget ID", err,)
+			c.Error(appErr)
+			return nil, ServiceErrorFromAppError(appErr)
 		}
 		budgetID = &budID
 	}
@@ -72,7 +79,9 @@ func (s *TransactionService) CreateTransaction(c *gin.Context, req *models.Creat
 	}
 
 	if err := s.transactionDatabase.CreateTransaction(txn); err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to create transaction")
+		appErr := errors.NewDBError(err)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
 	return txn, nil
@@ -82,7 +91,9 @@ func (s *TransactionService) UpdateTransaction(c *gin.Context, req *models.Updat
 	// Fetch existing transaction to verify ownership
 	_, err := s.transactionDatabase.GetTransactionByID(txnId, userId)
 	if err != nil {
-		return nil, NewServiceError(http.StatusNotFound, "transaction not found")
+		appErr := errors.NewNotFoundError("transaction", err,)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
 	updates := make(map[string]any)
@@ -98,7 +109,9 @@ func (s *TransactionService) UpdateTransaction(c *gin.Context, req *models.Updat
 	if req.Date != nil {
 		parsedDate, err := time.Parse(time.RFC3339, *req.Date)
 		if err != nil {
-			return nil, NewServiceError(http.StatusBadRequest, "invalid date format")
+			appErr := errors.NewBadRequestError("invalid date format", err)
+			c.Error(appErr)
+			return nil, ServiceErrorFromAppError(appErr)
 		}
 		updates["date"] = parsedDate
 	}
@@ -108,29 +121,37 @@ func (s *TransactionService) UpdateTransaction(c *gin.Context, req *models.Updat
 	if req.CategoryID != nil {
 		parsedCategoryID, err := uuid.Parse(*req.CategoryID)
 		if err != nil {
-			return nil, NewServiceError(http.StatusBadRequest, "invalid category ID format")
+			appErr := errors.NewBadRequestError("invalid category ID format", err)
+			c.Error(appErr)
+			return nil, ServiceErrorFromAppError(appErr)
 		}
 		updates["category_id"] = parsedCategoryID
 	}
 	if req.BudgetID != nil {
 		parsedBudgetID, err := uuid.Parse(*req.BudgetID)
 		if err != nil {
-			return nil, NewServiceError(http.StatusBadRequest, "invalid budget ID format")
+			appErr := errors.NewBadRequestError("invalid budget ID format", err)
+			c.Error(appErr)
+			return nil, ServiceErrorFromAppError(appErr)
 		}
 		updates["budget_id"] = parsedBudgetID
 	}
 
 	// Save updated transaction
 	err = s.transactionDatabase.UpdateTransaction(txnId, updates)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to update transaction")
-	}
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	// Fetch updated transaction
 	updatedTransaction, err := s.transactionDatabase.GetTransactionByID(txnId, userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch updated transaction")
-	}
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return updatedTransaction, nil
 }
@@ -139,22 +160,28 @@ func (s *TransactionService) DeleteTransaction(c *gin.Context, txnId uuid.UUID, 
 	// Verify transaction exists and belongs to user
 	_, err := s.transactionDatabase.GetTransactionByID(txnId, userId)
 	if err != nil {
-		return NewServiceError(http.StatusNotFound, "transaction not found")
+		appErr := errors.NewNotFoundError("transaction", err)
+		c.Error(appErr)
+		return ServiceErrorFromAppError(appErr)
 	}
 
 	err = s.transactionDatabase.DeleteTransaction(txnId)
-	if err != nil {
-		return NewServiceError(http.StatusInternalServerError, "failed to delete transaction")
-	}
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return ServiceErrorFromAppError(appErr)
+       }
 
 	return nil
 }
 
 func (s *TransactionService) GetTransactionsByUserID(c *gin.Context, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
 	txns, err := s.transactionDatabase.GetTransactionsByUser(userId)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions")
-	}
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
@@ -162,7 +189,9 @@ func (s *TransactionService) GetTransactionsByUserID(c *gin.Context, userId uuid
 func (s *TransactionService) GetTransactionByID(c *gin.Context, txnID uuid.UUID, userId uuid.UUID) (*models.Transaction, *ServiceError) {
 	txn, err := s.transactionDatabase.GetTransactionByID(txnID, userId)
 	if err != nil {
-		return nil, NewServiceError(http.StatusNotFound, "transaction not found")
+		appErr := errors.NewNotFoundError("transaction", err)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
 	return txn, nil
@@ -170,62 +199,78 @@ func (s *TransactionService) GetTransactionByID(c *gin.Context, txnID uuid.UUID,
 
 func (s *TransactionService) GetTransactionsByBudget(c *gin.Context, budgetID uuid.UUID, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
 	txns, err := s.transactionDatabase.GetTransactionsByBudget(userId, budgetID)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions by budget")
-	}
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
 
 func (s *TransactionService) GetTransactionsByCategory(c *gin.Context, categoryID uuid.UUID, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
-	txns, err := s.transactionDatabase.GetTransactionsByCategory(userId, categoryID)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions by category")
-	}
+       txns, err := s.transactionDatabase.GetTransactionsByCategory(userId, categoryID)
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
 
 func (s *TransactionService) GetTransactionsByDateRange(c *gin.Context, startDate, endDate time.Time, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
-	txns, err := s.transactionDatabase.GetTransactionsByDateRange(userId, startDate, endDate)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions by date range")
-	}
+       txns, err := s.transactionDatabase.GetTransactionsByDateRange(userId, startDate, endDate)
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
 
 func (s *TransactionService) GetTransactionsByType(c *gin.Context, transactionType string, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
 	if transactionType != "expense" && transactionType != "income" {
-		return nil, NewServiceError(http.StatusBadRequest, "invalid transaction type")
+		appErr := errors.NewBadRequestError("invalid transaction type", nil)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
-	txns, err := s.transactionDatabase.GetTransactionsByType(userId, transactionType)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions by type")
-	}
+       txns, err := s.transactionDatabase.GetTransactionsByType(userId, transactionType)
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
 
 func (s *TransactionService) GetTransactionsByAmountRange(c *gin.Context, minAmount, maxAmount float64, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
 	if minAmount < 0 || maxAmount < 0 || minAmount > maxAmount {
-		return nil, NewServiceError(http.StatusBadRequest, "invalid amount range")
+		appErr := errors.NewBadRequestError("invalid amount range", nil,)
+		c.Error(appErr)
+		return nil, ServiceErrorFromAppError(appErr)
 	}
 
-	txns, err := s.transactionDatabase.GetTransactionsByAmountRange(userId, minAmount, maxAmount)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions by amount range")
-	}
+       txns, err := s.transactionDatabase.GetTransactionsByAmountRange(userId, minAmount, maxAmount)
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }
 
 func (s *TransactionService) GetTransactionsWithFilters(c *gin.Context, filters map[string]interface{}, userId uuid.UUID) ([]*models.Transaction, *ServiceError) {
-	txns, err := s.transactionDatabase.GetTransactionsWithFilters(userId, filters)
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, "failed to fetch transactions with filters")
-	}
+       txns, err := s.transactionDatabase.GetTransactionsWithFilters(userId, filters)
+       if err != nil {
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
+	       return nil, ServiceErrorFromAppError(appErr)
+       }
 
 	return txns, nil
 }

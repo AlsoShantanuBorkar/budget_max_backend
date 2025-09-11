@@ -3,6 +3,7 @@ package database
 import (
 	"time"
 
+	"github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -31,65 +32,92 @@ func NewTransactionDatabaseService(db *gorm.DB) TransactionDatabaseServiceInterf
 }
 
 func (s *TransactionDatabaseService) CreateTransaction(txn *models.Transaction) error {
-	return s.database.Create(txn).Error
+	if err := s.database.Create(txn).Error; err != nil {
+		return errors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *TransactionDatabaseService) GetTransactionsByUser(userID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ?", userID).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 func (s *TransactionDatabaseService) UpdateTransaction(id uuid.UUID, updates map[string]any) error {
-	return s.database.Model(&models.Transaction{}).Where("id = ?", id).Updates(updates).Error
+	if err := s.database.Model(&models.Transaction{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return errors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *TransactionDatabaseService) DeleteTransaction(id uuid.UUID) error {
-	return s.database.Delete(&models.Transaction{}, "id = ?", id).Error
+	if err := s.database.Delete(&models.Transaction{}, "id = ?", id).Error; err != nil {
+		return errors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *TransactionDatabaseService) GetTransactionByID(txnId uuid.UUID, userId uuid.UUID) (*models.Transaction, error) {
 	var txn models.Transaction
 	err := s.database.First(&txn, "id = ? AND user_id = ?", txnId, userId).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.NewDBError(err)
 	}
-	return &txn, err
+	return &txn, nil
 }
 
 // GetTransactionsByBudget returns all transactions for a specific budget
 func (s *TransactionDatabaseService) GetTransactionsByBudget(userID uuid.UUID, budgetID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND budget_id = ?", userID, budgetID).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 // GetTransactionsByCategory returns all transactions for a specific category
 func (s *TransactionDatabaseService) GetTransactionsByCategory(userID uuid.UUID, categoryID uuid.UUID) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND category_id = ?", userID, categoryID).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 // GetTransactionsByDateRange returns all transactions within a date range
 func (s *TransactionDatabaseService) GetTransactionsByDateRange(userID uuid.UUID, startDate, endDate time.Time) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND date >= ? AND date <= ?", userID, startDate, endDate).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 // GetTransactionsByType returns all transactions of a specific type (expense/income)
 func (s *TransactionDatabaseService) GetTransactionsByType(userID uuid.UUID, transactionType string) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND type = ?", userID, transactionType).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 // GetTransactionsByAmountRange returns all transactions within an amount range
 func (s *TransactionDatabaseService) GetTransactionsByAmountRange(userID uuid.UUID, minAmount, maxAmount float64) ([]*models.Transaction, error) {
 	var txns []*models.Transaction
 	err := s.database.Where("user_id = ? AND amount >= ? AND amount <= ?", userID, minAmount, maxAmount).Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }
 
 // GetTransactionsWithFilters returns transactions with multiple optional filters
@@ -126,5 +154,8 @@ func (s *TransactionDatabaseService) GetTransactionsWithFilters(userID uuid.UUID
 
 	var txns []*models.Transaction
 	err := query.Find(&txns).Error
-	return txns, err
+	if err != nil {
+		return nil, errors.NewDBError(err)
+	}
+	return txns, nil
 }

@@ -1,6 +1,7 @@
 package database
 
 import (
+	appErrors "github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -23,28 +24,40 @@ func NewBudgetDatabaseService(db *gorm.DB) BudgetDatabaseServiceInterface {
 }
 
 func (s *BudgetDatabaseService) CreateBudget(budget *models.Budget) error {
-	return s.database.Create(budget).Error
+	if err := s.database.Create(budget).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *BudgetDatabaseService) GetBudgetsByUser(userID uuid.UUID) ([]models.Budget, error) {
 	var budgets []models.Budget
 	err := s.database.Where("user_id = ?", userID).Find(&budgets).Error
-	return budgets, err
+	if err != nil {
+		return nil, appErrors.NewDBError(err)
+	}
+	return budgets, nil
 }
 
 func (s *BudgetDatabaseService) UpdateBudget(id uuid.UUID, updates map[string]any) error {
-	return s.database.Model(&models.Budget{}).Where("id = ?", id).Updates(updates).Error
+	if err := s.database.Model(&models.Budget{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *BudgetDatabaseService) DeleteBudget(id uuid.UUID) error {
-	return s.database.Delete(&models.Budget{}, "id = ?", id).Error
+	if err := s.database.Delete(&models.Budget{}, "id = ?", id).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *BudgetDatabaseService) GetBudgetByID(budgetId uuid.UUID, userId uuid.UUID) (*models.Budget, error) {
 	var b models.Budget
 	err := s.database.First(&b, "id = ? AND user_id = ?", budgetId, userId).Error
 	if err != nil {
-		return nil, err
+		return nil, appErrors.NewDBError(err)
 	}
-	return &b, err
+	return &b, nil
 }

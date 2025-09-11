@@ -15,9 +15,9 @@ type AppError struct {
 
 func (e *AppError) Error() string {
     if e.Err != nil {
-        return fmt.Sprintf("[%s] %s: %v", e.Code, e.Message, e.Err)
+        return fmt.Sprintf("%d %s: %v", e.Code, e.Message, e.Err)
     }
-    return fmt.Sprintf("[%s] %s", e.Code, e.Message)
+    return fmt.Sprintf("%d %s", e.Code, e.Message)
 }
 
 func (e *AppError) Unwrap() error {
@@ -29,11 +29,11 @@ func NewNotFoundError(entity string, err error) *AppError {
     return &AppError{
         Code:    http.StatusNotFound,
         Message: fmt.Sprintf("%s not found", entity),
-        Err:     err,
+        Err:     err,        
     }
 }
 
-func NewDBError(err error) *AppError {
+func NewDBError(err error   ) *AppError {
     return &AppError{
         Code:    http.StatusInternalServerError,
         Message: "Database error",
@@ -45,7 +45,7 @@ func NewValidationError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusBadRequest,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }
 
@@ -53,7 +53,7 @@ func NewUnauthorizedError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusUnauthorized,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }
 
@@ -61,7 +61,7 @@ func NewConflictError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusConflict,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }
 
@@ -69,7 +69,8 @@ func NewInternalError(err error) *AppError {
     return &AppError{
         Code:    http.StatusInternalServerError,
         Message: "Internal Server Error",
-        Err:     err,
+        Err:     err,        
+
     }
 }
 
@@ -77,7 +78,7 @@ func NewBadRequestError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusBadRequest,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }
 
@@ -85,7 +86,7 @@ func NewForbiddenError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusForbidden,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }
 
@@ -93,6 +94,6 @@ func NewTooManyRequestsError(msg string, err error) *AppError {
     return &AppError{
         Code:    http.StatusTooManyRequests,
         Message: msg,
-        Err:     err,
+        Err:     err,        
     }
 }

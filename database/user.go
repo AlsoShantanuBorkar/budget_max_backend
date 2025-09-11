@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	appErrors "github.com/AlsoShantanuBorkar/budget_max/errors"
 	"github.com/AlsoShantanuBorkar/budget_max/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -25,7 +26,10 @@ func NewUserDatabaseService(db *gorm.DB) UserDatabaseServiceInterface {
 }
 
 func (s *UserDatabaseService) CreateUser(user *models.User) error {
-	return s.database.Create(user).Error
+	if err := s.database.Create(user).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *UserDatabaseService) GetUserByID(id uuid.UUID) (*models.User, error) {
@@ -34,7 +38,10 @@ func (s *UserDatabaseService) GetUserByID(id uuid.UUID) (*models.User, error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	return &user, err
+	if err != nil {
+		return nil, appErrors.NewDBError(err)
+	}
+	return &user, nil
 }
 
 func (s *UserDatabaseService) GetUserByEmail(email string) (*models.User, error) {
@@ -45,13 +52,22 @@ func (s *UserDatabaseService) GetUserByEmail(email string) (*models.User, error)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	return &user, err
+	if err != nil {
+		return nil, appErrors.NewDBError(err)
+	}
+	return &user, nil
 }
 
 func (s *UserDatabaseService) UpdateUser(userID uuid.UUID, updates map[string]interface{}) error {
-	return s.database.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
+	if err := s.database.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }
 
 func (s *UserDatabaseService) DeleteUser(id uuid.UUID) error {
-	return s.database.Delete(&models.User{}, "id = ?", id).Error
+	if err := s.database.Delete(&models.User{}, "id = ?", id).Error; err != nil {
+		return appErrors.NewDBError(err)
+	}
+	return nil
 }

@@ -38,26 +38,30 @@ func NewTransactionController(service services.TransactionServiceInterface) *Tra
 func (ctrl *TransactionController) CreateTransaction(c *gin.Context) {
 	var req models.CreateTransactionRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txn, err := ctrl.service.CreateTransaction(c, &req, userId)
        if err != nil {
-	       appErr := errors.NewInternalError(err)
+	       appErr := errors.NewInternalError(err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -71,20 +75,23 @@ func (ctrl *TransactionController) CreateTransaction(c *gin.Context) {
 func (ctrl *TransactionController) UpdateTransaction(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        var req models.UpdateTransactionRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -92,14 +99,16 @@ func (ctrl *TransactionController) UpdateTransaction(c *gin.Context) {
        txnIdStr := c.Param("id")
        txnId, err := uuid.Parse(txnIdStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        updatedTransaction, serviceErr := ctrl.service.UpdateTransaction(c, &req, txnId, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -113,7 +122,8 @@ func (ctrl *TransactionController) UpdateTransaction(c *gin.Context) {
 func (ctrl *TransactionController) DeleteTransaction(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -121,14 +131,16 @@ func (ctrl *TransactionController) DeleteTransaction(c *gin.Context) {
        txnIdStr := c.Param("id")
        txnId, err := uuid.Parse(txnIdStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        serviceErr := ctrl.service.DeleteTransaction(c, txnId, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -141,14 +153,16 @@ func (ctrl *TransactionController) DeleteTransaction(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByUserID(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByUserID(c, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -162,7 +176,8 @@ func (ctrl *TransactionController) GetTransactionsByUserID(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionByID(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -170,14 +185,16 @@ func (ctrl *TransactionController) GetTransactionByID(c *gin.Context) {
        txnIDStr := c.Param("id")
        txnID, err := uuid.Parse(txnIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid transaction ID format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txn, serviceErr := ctrl.service.GetTransactionByID(c, txnID, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -191,7 +208,8 @@ func (ctrl *TransactionController) GetTransactionByID(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByBudget(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -199,14 +217,16 @@ func (ctrl *TransactionController) GetTransactionsByBudget(c *gin.Context) {
        budgetIDStr := c.Param("budget_id")
        budgetID, err := uuid.Parse(budgetIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid budget ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid budget ID format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByBudget(c, budgetID, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -220,7 +240,8 @@ func (ctrl *TransactionController) GetTransactionsByBudget(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByCategory(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -228,14 +249,16 @@ func (ctrl *TransactionController) GetTransactionsByCategory(c *gin.Context) {
        categoryIDStr := c.Param("categoryId")
        categoryID, err := uuid.Parse(categoryIDStr)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid category ID format", err)
+	       appErr := errors.NewBadRequestError("Invalid category ID format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByCategory(c, categoryID, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -249,40 +272,46 @@ func (ctrl *TransactionController) GetTransactionsByCategory(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByDateRange(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        var req models.DateRangeRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        startDate, err := time.Parse(time.RFC3339, req.StartDate)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid start date format", err)
+	       appErr := errors.NewBadRequestError("Invalid start date format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        endDate, err := time.Parse(time.RFC3339, req.EndDate)
        if err != nil {
-	       appErr := errors.NewBadRequestError("Invalid end date format", err)
+	       appErr := errors.NewBadRequestError("Invalid end date format", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByDateRange(c, startDate, endDate, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -296,21 +325,24 @@ func (ctrl *TransactionController) GetTransactionsByDateRange(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByType(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        transactionType := c.Param("type")
        if transactionType != "expense" && transactionType != "income" {
-	       appErr := errors.NewBadRequestError("Invalid transaction type. Must be 'expense' or 'income'", nil)
+	       appErr := errors.NewBadRequestError("Invalid transaction type. Must be 'expense' or 'income'", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByType(c, transactionType, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -324,26 +356,30 @@ func (ctrl *TransactionController) GetTransactionsByType(c *gin.Context) {
 func (ctrl *TransactionController) GetTransactionsByAmountRange(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        var req models.AmountRangeRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        txns, serviceErr := ctrl.service.GetTransactionsByAmountRange(c, req.MinAmount, req.MaxAmount, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -357,19 +393,22 @@ func (ctrl *TransactionController) GetTransactionsByAmountRange(c *gin.Context) 
 func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
        userId, ok := utils.ParseUserID(c)
        if !ok {
-	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil)
+	       appErr := errors.NewUnauthorizedError("Invalid user ID", nil, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
 
        var req models.TransactionFiltersRequest
        if err := c.ShouldBindJSON(&req); err != nil {
-	       appErr := errors.NewBadRequestError("Invalid Request", err)
+	       appErr := errors.NewBadRequestError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
        if err := utils.GetValidator().Struct(req); err != nil {
-	       appErr := errors.NewValidationError("Invalid Request", err)
+	       appErr := errors.NewValidationError("Invalid Request", err, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
@@ -379,7 +418,8 @@ func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
        if req.BudgetID != nil {
 	       budgetID, err := uuid.Parse(*req.BudgetID)
 	       if err != nil {
-		       appErr := errors.NewBadRequestError("Invalid budget ID format", err)
+		       appErr := errors.NewBadRequestError("Invalid budget ID format", err, )
+		       c.Error(appErr)
 		       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 		       return
 	       }
@@ -389,7 +429,8 @@ func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
        if req.CategoryID != nil {
 	       categoryID, err := uuid.Parse(*req.CategoryID)
 	       if err != nil {
-		       appErr := errors.NewBadRequestError("Invalid category ID format", err)
+		       appErr := errors.NewBadRequestError("Invalid category ID format", err, )
+		       c.Error(appErr)
 		       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 		       return
 	       }
@@ -403,7 +444,8 @@ func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
        if req.StartDate != nil {
 	       startDate, err := time.Parse(time.RFC3339, *req.StartDate)
 	       if err != nil {
-		       appErr := errors.NewBadRequestError("Invalid start date format", err)
+		       appErr := errors.NewBadRequestError("Invalid start date format", err, )
+		       c.Error(appErr)
 		       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 		       return
 	       }
@@ -413,7 +455,8 @@ func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
        if req.EndDate != nil {
 	       endDate, err := time.Parse(time.RFC3339, *req.EndDate)
 	       if err != nil {
-		       appErr := errors.NewBadRequestError("Invalid end date format", err)
+		       appErr := errors.NewBadRequestError("Invalid end date format", err, )
+		       c.Error(appErr)
 		       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 		       return
 	       }
@@ -430,7 +473,8 @@ func (ctrl *TransactionController) GetTransactionsWithFilters(c *gin.Context) {
 
        txns, serviceErr := ctrl.service.GetTransactionsWithFilters(c, filters, userId)
        if serviceErr != nil {
-	       appErr := errors.NewInternalError(serviceErr)
+	       appErr := errors.NewInternalError(serviceErr, )
+	       c.Error(appErr)
 	       c.JSON(appErr.Code, gin.H{"message": appErr.Message})
 	       return
        }
